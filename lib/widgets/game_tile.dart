@@ -83,13 +83,9 @@ class GameTile extends StatelessWidget {
               ),
 
             // Unit display
-            if (unit != null && unit?.hp == 0)
-              Center(
-                child: Image.asset('assets/skull.png', width: 48, height: 48),
-              )
-            else if (unit != null)
+            if (unit != null) ...[
               Opacity(
-                opacity: hasActed ? 0.4 : 1.0,
+                opacity: unit!.hp == 0 ? 0.2 : (hasActed ? 0.4 : 1.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -99,6 +95,18 @@ class GameTile extends StatelessWidget {
                   ],
                 ),
               ),
+              if (unit!.hp == 0)
+                Positioned.fill(
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      'assets/skull.png',
+                      width: 48,
+                      height: 48,
+                    ),
+                  ),
+                ),
+            ],
           ],
         ),
       ),
