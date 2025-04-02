@@ -122,10 +122,26 @@ class _GameBoardState extends State<GameBoard> {
         _checkVictoryCondition(context);
       }
       // Attempt charge (Tyranid specific)
+      // En game_board.dart, modificar la sección de "Attempt charge" en _onTileTapped:
+      // Attempt charge (Tyranid specific)
       else if (attacker.type == 'tyranid' &&
           attacker.attackRange == 1 &&
           distance <= 12) {
-        int chargeRoll = await roll2D6(context, distance: distance.round());
+        // Reemplazar esto:
+        // int chargeRoll = await roll2D6(context, distance: distance.round());
+
+        // Con esto:
+        int d1 = Random().nextInt(6) + 1;
+        int d2 = Random().nextInt(6) + 1;
+        int chargeRoll = d1 + d2;
+
+        gameState.battleLog.add(
+          'Carga: tirada $d1 + $d2 = $chargeRoll contra distancia ${distance.round()}',
+        );
+        gameState.battleLog.add(
+          chargeRoll >= distance ? 'Carga exitosa.' : 'Carga fallida.',
+        );
+        gameState.notifyListeners();
 
         if (chargeRoll >= distance) {
           _handleSuccessfulCharge(row, col, selectedRow, selectedCol);
