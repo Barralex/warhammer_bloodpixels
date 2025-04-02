@@ -33,6 +33,39 @@ class _GameBoardState extends State<GameBoard> {
     }
     // Move to empty tile
     else if (gameState.selectedTile != null && unit == null) {
+      final selected = gameState.selectedTile!;
+      final selectedRow = selected.dy.toInt();
+      final selectedCol = selected.dx.toInt();
+      final Unit selectedUnit = gameState.board[selectedRow][selectedCol]!;
+
+      bool isLockedInCombat = false;
+      final adjacentOffsets = [
+        Offset(0, 1),
+        Offset(1, 0),
+        Offset(0, -1),
+        Offset(-1, 0),
+      ];
+
+      for (final offset in adjacentOffsets) {
+        final newRow = selectedRow + offset.dy.toInt();
+        final newCol = selectedCol + offset.dx.toInt();
+
+        if (newRow >= 0 &&
+            newRow < 10 &&
+            newCol >= 0 &&
+            newCol < 14 &&
+            gameState.board[newRow][newCol] != null &&
+            gameState.board[newRow][newCol]!.type != selectedUnit.type &&
+            gameState.board[newRow][newCol]!.hp > 0) {
+          isLockedInCombat = true;
+          break;
+        }
+      }
+
+      if (isLockedInCombat) {
+        return; // No puede moverse
+      }
+
       if (gameState.moveRange.contains(tappedOffset)) {
         gameState.moveUnit(row, col);
       }
@@ -183,6 +216,7 @@ class _GameBoardState extends State<GameBoard> {
                     Offset(col.toDouble(), row.toDouble()),
                   ),
                   onTap: _onTileTapped,
+                  board: gameState.board,
                 );
               },
             ),

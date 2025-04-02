@@ -9,6 +9,7 @@ class GameTile extends StatelessWidget {
   final bool inMoveRange;
   final bool inAttackRange;
   final bool hasActed;
+  final List<List<Unit?>> board;
   final Function(int, int) onTap;
 
   const GameTile({
@@ -20,6 +21,7 @@ class GameTile extends StatelessWidget {
     required this.inMoveRange,
     required this.inAttackRange,
     required this.hasActed,
+    required this.board,
     required this.onTap,
   }) : super(key: key);
 
@@ -66,6 +68,17 @@ class GameTile extends StatelessWidget {
                     color: Colors.red.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(50),
                   ),
+                ),
+              ),
+
+            // Indicate if unit is engaged
+            if (unit != null && unit!.hp > 0 && _isEngaged(row, col))
+              const Positioned(
+                top: 4,
+                right: 4,
+                child: Tooltip(
+                  message: 'Trabado en combate',
+                  child: Icon(Icons.lock, size: 18, color: Colors.redAccent),
                 ),
               ),
 
@@ -121,5 +134,31 @@ class GameTile extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  bool _isEngaged(int row, int col) {
+    final adjacentOffsets = [
+      Offset(0, 1),
+      Offset(1, 0),
+      Offset(0, -1),
+      Offset(-1, 0),
+    ];
+
+    for (final offset in adjacentOffsets) {
+      final newRow = row + offset.dy.toInt();
+      final newCol = col + offset.dx.toInt();
+
+      if (newRow >= 0 &&
+          newRow < 10 &&
+          newCol >= 0 &&
+          newCol < 14 &&
+          board[newRow][newCol] != null &&
+          board[newRow][newCol]!.type != unit!.type &&
+          board[newRow][newCol]!.hp > 0) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
