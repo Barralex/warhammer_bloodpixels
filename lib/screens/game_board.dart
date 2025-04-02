@@ -122,15 +122,9 @@ class _GameBoardState extends State<GameBoard> {
         _checkVictoryCondition(context);
       }
       // Attempt charge (Tyranid specific)
-      // En game_board.dart, modificar la sección de "Attempt charge" en _onTileTapped:
-      // Attempt charge (Tyranid specific)
       else if (attacker.type == 'tyranid' &&
           attacker.attackRange == 1 &&
           distance <= 12) {
-        // Reemplazar esto:
-        // int chargeRoll = await roll2D6(context, distance: distance.round());
-
-        // Con esto:
         int d1 = Random().nextInt(6) + 1;
         int d2 = Random().nextInt(6) + 1;
         int chargeRoll = d1 + d2;
@@ -223,27 +217,49 @@ class _GameBoardState extends State<GameBoard> {
     });
   }
 
+  Widget _buildTurnBanner() {
+    bool isMarineTurn = gameState.currentTurn == 'space_marine';
+    String factionName = isMarineTurn ? "Space Marines" : "Tiranidos";
+    String imageAsset =
+        isMarineTurn ? 'assets/space_marine.png' : 'assets/tyranid.png';
+
+    Color backgroundColor =
+        isMarineTurn
+            ? const Color(0xFF0B1E36) // azul oscuro marines
+            : const Color(0xFF3A0D0D); // rojo púrpura tiránidos
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      color: backgroundColor,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(imageAsset, width: 32, height: 32),
+          const SizedBox(width: 12),
+          Text(
+            'Turno ${gameState.turnNumber}  –  $factionName',
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Image.asset(imageAsset, width: 32, height: 32),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.brown[800],
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Turno ${gameState.turnNumber}",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 20),
-            Text(
-              gameState.currentTurn == 'space_marine'
-                  ? "Space Marines' Turn"
-                  : "Tyranids' Turn",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
+        title: _buildTurnBanner(),
         centerTitle: true,
       ),
       body: Row(
