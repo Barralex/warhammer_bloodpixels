@@ -70,7 +70,11 @@ class GameTile extends StatelessWidget {
               ),
 
             // Unit display
-            if (unit != null)
+            if (unit != null && unit?.hp == 0)
+              Center(
+                child: Image.asset('assets/skull.png', width: 48, height: 48),
+              )
+            else if (unit != null)
               Opacity(
                 opacity: hasActed ? 0.4 : 1.0,
                 child: Column(

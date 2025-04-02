@@ -89,9 +89,7 @@ class _GameBoardState extends State<GameBoard> {
     target.hp -= attacker.damage;
 
     if (target.hp <= 0) {
-      setState(() {
-        gameState.board[targetRow][targetCol] = null;
-      });
+      target.hp = 0;
     }
 
     // Set initial position for the attacker
