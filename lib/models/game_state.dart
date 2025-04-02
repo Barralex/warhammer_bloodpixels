@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'unit.dart';
+import '../widgets/battle_log_panel.dart';
 
 class GameState extends ChangeNotifier {
   List<List<Unit?>> board = List.generate(10, (index) => List.filled(14, null));
@@ -9,6 +10,7 @@ class GameState extends ChangeNotifier {
   List<Offset> moveRange = [];
   List<Offset> attackRange = [];
   Set<Offset> actedUnits = {};
+  List<String> battleLog = [];
 
   GameState() {
     _initializeBoard();
@@ -95,8 +97,6 @@ class GameState extends ChangeNotifier {
     if (attacker.type == 'tyranid' &&
         attacker.attackRange == 1 &&
         distance <= 12) {
-      // We'll need to move the dice roller code or implement a callback
-      // For now, let's simulate the roll
       int chargeRoll = await _simulateRoll2D6(
         context,
         distance: distance.round(),
@@ -115,7 +115,6 @@ class GameState extends ChangeNotifier {
           board[selectedRow][selectedCol] = null;
           finalOffset = Offset(targetCol.toDouble(), targetRow.toDouble());
         } else {
-          // Find adjacent spot
           finalOffset = _findAdjacentSpot(
             selectedRow,
             selectedCol,
@@ -167,7 +166,6 @@ class GameState extends ChangeNotifier {
       }
     }
 
-    // If no spot found, don't move
     return Offset(selectedCol.toDouble(), selectedRow.toDouble());
   }
 
@@ -180,10 +178,18 @@ class GameState extends ChangeNotifier {
     Unit attacker = board[selectedRow][selectedCol]!;
     Unit target = board[targetRow][targetCol]!;
 
-    target.hp -= attacker.damage;
+    int damage = attacker.damage;
+    target.hp -= damage;
+
+    String attackerType =
+        attacker.type == 'space_marine' ? 'Marine' : 'Tiranido';
+    String targetType = target.type == 'space_marine' ? 'Marine' : 'Tiranido';
+
+    battleLog.add('$attackerType ataca a $targetType por $damage de daño');
 
     if (target.hp <= 0) {
       target.hp = 0;
+      battleLog.add('$targetType muere ☠️');
     }
 
     actedUnits.add(Offset(selectedCol.toDouble(), selectedRow.toDouble()));
@@ -235,12 +241,20 @@ class GameState extends ChangeNotifier {
     return result;
   }
 
-  // Temporary method to simulate dice rolling until we refactor dice_roller
   Future<int> _simulateRoll2D6(
     BuildContext context, {
     required int distance,
   }) async {
-    // In a complete implementation, this would call your dice_roller
-    return Random().nextInt(6) + Random().nextInt(6) + 2; // 2d6
+    int d1 = Random().nextInt(6) + 1;
+    int d2 = Random().nextInt(6) + 1;
+    int total = d1 + d2;
+
+    battleLog.add(
+      'Carga: tirada $d1 + $d2 = $total contra distancia $distance',
+    );
+    battleLog.add(total >= distance ? 'Carga exitosa.' : 'Carga fallida.');
+
+    notifyListeners();
+    return total;
   }
 }

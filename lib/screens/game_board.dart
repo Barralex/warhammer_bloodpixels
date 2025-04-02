@@ -4,6 +4,7 @@ import '../models/game_state.dart';
 import '../models/unit.dart';
 import '../widgets/game_tile.dart';
 import '../widgets/dice_roller.dart';
+import '../widgets/battle_log_panel.dart';
 
 class GameBoard extends StatefulWidget {
   @override
@@ -219,46 +220,55 @@ class _GameBoardState extends State<GameBoard> {
         ),
         centerTitle: true,
       ),
-      body: Container(
-        color: const Color(0xFFF5F5DC),
-        child: Center(
-          child: AspectRatio(
-            aspectRatio: 14 / 10,
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 14,
-                childAspectRatio: 1,
-              ),
-              itemCount: 140,
-              itemBuilder: (context, index) {
-                int row = index ~/ 14;
-                int col = index % 14;
-                Unit? unit = gameState.board[row][col];
-                bool isSelected =
-                    gameState.selectedTile?.dx == col &&
-                    gameState.selectedTile?.dy == row;
+      body: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Container(
+              color: const Color(0xFFF5F5DC),
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: 14 / 10,
+                  child: GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 14,
+                          childAspectRatio: 1,
+                        ),
+                    itemCount: 140,
+                    itemBuilder: (context, index) {
+                      int row = index ~/ 14;
+                      int col = index % 14;
+                      Unit? unit = gameState.board[row][col];
+                      bool isSelected =
+                          gameState.selectedTile?.dx == col &&
+                          gameState.selectedTile?.dy == row;
 
-                return GameTile(
-                  row: row,
-                  col: col,
-                  unit: unit,
-                  isSelected: isSelected,
-                  inMoveRange: gameState.moveRange.contains(
-                    Offset(col.toDouble(), row.toDouble()),
+                      return GameTile(
+                        row: row,
+                        col: col,
+                        unit: unit,
+                        isSelected: isSelected,
+                        inMoveRange: gameState.moveRange.contains(
+                          Offset(col.toDouble(), row.toDouble()),
+                        ),
+                        inAttackRange: gameState.attackRange.contains(
+                          Offset(col.toDouble(), row.toDouble()),
+                        ),
+                        hasActed: gameState.actedUnits.contains(
+                          Offset(col.toDouble(), row.toDouble()),
+                        ),
+                        onTap: _onTileTapped,
+                        board: gameState.board,
+                      );
+                    },
                   ),
-                  inAttackRange: gameState.attackRange.contains(
-                    Offset(col.toDouble(), row.toDouble()),
-                  ),
-                  hasActed: gameState.actedUnits.contains(
-                    Offset(col.toDouble(), row.toDouble()),
-                  ),
-                  onTap: _onTileTapped,
-                  board: gameState.board,
-                );
-              },
+                ),
+              ),
             ),
           ),
-        ),
+          BattleLogPanel(logLines: gameState.battleLog),
+        ],
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 12, right: 12),
