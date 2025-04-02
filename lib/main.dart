@@ -47,10 +47,12 @@ class _GameBoardState extends State<GameBoard> {
   String _currentTurn = 'space_marine';
   List<Offset> _moveRange = [];
   List<Offset> _attackRange = [];
+  Set<Offset> _actedUnits = {};
 
   @override
   void initState() {
     super.initState();
+    _actedUnits = {};
     for (int i = 0; i < 5; i++) {
       board[0][i] = Unit("tyranid");
     }
@@ -59,8 +61,13 @@ class _GameBoardState extends State<GameBoard> {
     }
   }
 
-  void _onTileTapped(int row, int col) {
+  void _onTileTapped(int row, int col) async {
+    Offset tappedOffset = Offset(col.toDouble(), row.toDouble());
     Unit? unit = board[row][col];
+
+    if (unit?.type == _currentTurn && _actedUnits.contains(tappedOffset))
+      return;
+
     if (unit?.type == _currentTurn) {
       setState(() {
         _selectedTile = Offset(col.toDouble(), row.toDouble());
@@ -80,20 +87,92 @@ class _GameBoardState extends State<GameBoard> {
           _selectedTile = null;
           _moveRange = [];
           _attackRange = [];
-          _currentTurn =
-              _currentTurn == 'space_marine' ? 'tyranid' : 'space_marine';
+          _actedUnits.add(Offset(col.toDouble(), row.toDouble()));
         });
       }
-    } else if (unit?.type != _currentTurn && unit != null) {
+    } else if (_selectedTile != null &&
+        unit?.type != _currentTurn &&
+        unit != null) {
       int selectedRow = _selectedTile!.dy.toInt();
       int selectedCol = _selectedTile!.dx.toInt();
+      Unit attacker = board[selectedRow][selectedCol]!;
 
       double distance = sqrt(
         pow(row - selectedRow, 2) + pow(col - selectedCol, 2),
       );
 
-      if (distance <= board[selectedRow][selectedCol]!.attackRange) {
+      if (distance <= attacker.attackRange) {
         _attack(selectedRow, selectedCol, row, col);
+        setState(() {
+          _actedUnits.add(
+            Offset(selectedCol.toDouble(), selectedRow.toDouble()),
+          );
+          _selectedTile = null;
+          _moveRange = [];
+          _attackRange = [];
+        });
+      } else if (attacker.type == 'tyranid' &&
+          attacker.attackRange == 1 &&
+          distance <= 12) {
+        int chargeRoll = await _roll2D6(context, distance: distance.round());
+        if (chargeRoll >= distance) {
+          setState(() {
+            int targetRow = row;
+            int targetCol = col;
+
+            _attack(selectedRow, selectedCol, targetRow, targetCol);
+
+            Offset finalOffset = Offset(
+              selectedCol.toDouble(),
+              selectedRow.toDouble(),
+            );
+
+            if (board[targetRow][targetCol] == null) {
+              board[targetRow][targetCol] = attacker;
+              board[selectedRow][selectedCol] = null;
+              finalOffset = Offset(targetCol.toDouble(), targetRow.toDouble());
+            } else {
+              final directions = [
+                [0, 1],
+                [1, 0],
+                [0, -1],
+                [-1, 0],
+                [-1, -1],
+                [-1, 1],
+                [1, -1],
+                [1, 1],
+              ];
+              for (var dir in directions) {
+                int newRow = targetRow + dir[0];
+                int newCol = targetCol + dir[1];
+                if (newRow >= 0 &&
+                    newRow < 10 &&
+                    newCol >= 0 &&
+                    newCol < 14 &&
+                    board[newRow][newCol] == null) {
+                  board[newRow][newCol] = attacker;
+                  board[selectedRow][selectedCol] = null;
+                  finalOffset = Offset(newCol.toDouble(), newRow.toDouble());
+                  break;
+                }
+              }
+            }
+
+            _selectedTile = null;
+            _moveRange = [];
+            _attackRange = [];
+            _actedUnits.add(finalOffset);
+          });
+        } else {
+          setState(() {
+            _actedUnits.add(
+              Offset(selectedCol.toDouble(), selectedRow.toDouble()),
+            );
+            _selectedTile = null;
+            _moveRange = [];
+            _attackRange = [];
+          });
+        }
       }
     }
   }
@@ -111,8 +190,7 @@ class _GameBoardState extends State<GameBoard> {
     }
 
     setState(() {
-      _currentTurn =
-          _currentTurn == 'space_marine' ? 'tyranid' : 'space_marine';
+      _actedUnits.add(Offset(selectedCol.toDouble(), selectedRow.toDouble()));
     });
   }
 
@@ -148,17 +226,39 @@ class _GameBoardState extends State<GameBoard> {
     return attackRange;
   }
 
-  Future<int> _roll2D6(BuildContext context) async {
+  Future<int> _roll2D6(BuildContext context, {required int distance}) async {
     int die1 = Random().nextInt(6) + 1;
     int die2 = Random().nextInt(6) + 1;
     int total = die1 + die2;
+    bool success = total >= distance;
 
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Carga"),
-          content: Text("Resultado: \$die1 + \$die2 = \$total"),
+          title: const Text("Carga cuerpo a cuerpo"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '🎲 $die1 + $die2 = $total',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text('Necesario: $distance'),
+              const SizedBox(height: 8),
+              Text(
+                success ? '¡Carga exitosa!' : 'Falló la carga',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: success ? Colors.green : Colors.red,
+                ),
+              ),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -255,45 +355,57 @@ class _GameBoardState extends State<GameBoard> {
                             ),
                           ),
                         unit != null
-                            ? Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Expanded(
-                                  child: Image.asset('assets/${unit.type}.png'),
-                                ),
-                                const SizedBox(height: 2),
-                                SizedBox(
-                                  height: 10,
-                                  width: 40,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(3),
-                                        child: LinearProgressIndicator(
-                                          value: unit.hp / unit.maxHp,
-                                          backgroundColor: Colors.black26,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                unit.type == 'space_marine'
-                                                    ? Colors.green
-                                                    : Colors.red,
-                                              ),
-                                          minHeight: 10,
-                                        ),
-                                      ),
-                                      Text(
-                                        '${unit.hp}',
-                                        style: const TextStyle(
-                                          fontSize: 8,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
+                            ? Opacity(
+                              opacity:
+                                  _actedUnits.contains(
+                                        Offset(col.toDouble(), row.toDouble()),
+                                      )
+                                      ? 0.4
+                                      : 1.0,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: Image.asset(
+                                      'assets/${unit.type}.png',
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 2),
+                                  SizedBox(
+                                    height: 10,
+                                    width: 40,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            3,
+                                          ),
+                                          child: LinearProgressIndicator(
+                                            value: unit.hp / unit.maxHp,
+                                            backgroundColor: Colors.black26,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  unit.type == 'space_marine'
+                                                      ? Colors.green
+                                                      : Colors.red,
+                                                ),
+                                            minHeight: 10,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${unit.hp}',
+                                          style: const TextStyle(
+                                            fontSize: 8,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             )
                             : Container(), // Ensures that if there's no unit, we render an empty container.
                       ],
@@ -301,6 +413,38 @@ class _GameBoardState extends State<GameBoard> {
                   ),
                 );
               },
+            ),
+          ),
+        ),
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 12, right: 12),
+        child: ElevatedButton.icon(
+          onPressed: () {
+            setState(() {
+              _currentTurn =
+                  _currentTurn == 'space_marine' ? 'tyranid' : 'space_marine';
+              _actedUnits.clear();
+            });
+          },
+          icon: const Icon(Icons.shield_moon, size: 20),
+          label: const Text(
+            'Finalizar Turno',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+              fontSize: 14,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2C2C2C),
+            foregroundColor: Colors.white,
+            elevation: 10,
+            shadowColor: Colors.black,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: Color(0xFF555555), width: 2),
             ),
           ),
         ),
