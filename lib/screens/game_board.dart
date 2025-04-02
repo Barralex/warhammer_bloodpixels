@@ -22,6 +22,40 @@ class _GameBoardState extends State<GameBoard> {
     });
   }
 
+  void _checkVictoryCondition(BuildContext context) {
+    final allUnits =
+        gameState.board.expand((row) => row).whereType<Unit>().toList();
+
+    final hasTyranids = allUnits.any((u) => u.type == 'tyranid' && u.hp > 0);
+    final hasMarines = allUnits.any(
+      (u) => u.type == 'space_marine' && u.hp > 0,
+    );
+
+    if (!hasTyranids || !hasMarines) {
+      String winner = hasTyranids ? "Tiranidos" : "Space Marines";
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (_) => AlertDialog(
+              title: Text('Victoria'),
+              content: Text('$winner han ganado la batalla.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      gameState = GameState();
+                    });
+                  },
+                  child: const Text('Reiniciar juego'),
+                ),
+              ],
+            ),
+      );
+    }
+  }
+
   void _onTileTapped(int row, int col) async {
     Unit? unit = gameState.board[row][col];
     Offset tappedOffset = Offset(col.toDouble(), row.toDouble());
@@ -68,6 +102,7 @@ class _GameBoardState extends State<GameBoard> {
 
       if (gameState.moveRange.contains(tappedOffset)) {
         gameState.moveUnit(row, col);
+        _checkVictoryCondition(context);
       }
     }
     // Attack enemy unit
@@ -83,6 +118,7 @@ class _GameBoardState extends State<GameBoard> {
       // Normal attack
       if (distance <= attacker.attackRange) {
         gameState.attack(row, col, context);
+        _checkVictoryCondition(context);
       }
       // Attempt charge (Tyranid specific)
       else if (attacker.type == 'tyranid' &&
@@ -166,6 +202,7 @@ class _GameBoardState extends State<GameBoard> {
     setState(() {
       gameState.actedUnits.add(finalOffset);
       gameState.clearSelection();
+      _checkVictoryCondition(context);
     });
   }
 

@@ -83,30 +83,35 @@ class GameTile extends StatelessWidget {
               ),
 
             // Unit display
-            if (unit != null) ...[
-              Opacity(
-                opacity: unit!.hp == 0 ? 0.2 : (hasActed ? 0.4 : 1.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(child: Image.asset('assets/${unit!.type}.png')),
-                    const SizedBox(height: 2),
-                    _buildHealthBar(unit!),
-                  ],
-                ),
-              ),
-              if (unit!.hp == 0)
-                Positioned.fill(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Image.asset(
-                      'assets/skull.png',
-                      width: 48,
-                      height: 48,
+            if (unit != null)
+              Stack(
+                children: [
+                  Opacity(
+                    opacity: unit!.hp == 0 ? 0.2 : (hasActed ? 0.4 : 1.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Image.asset('assets/${unit!.type}.png'),
+                        ),
+                        const SizedBox(height: 2),
+                        _buildHealthBar(unit!),
+                      ],
                     ),
                   ),
-                ),
-            ],
+                  if (unit!.hp == 0)
+                    Positioned.fill(
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Image.asset(
+                          'assets/skull.png',
+                          width: 48,
+                          height: 48,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
           ],
         ),
       ),
