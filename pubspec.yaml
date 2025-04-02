@@ -61,6 +61,7 @@ flutter:
     - assets/tyranid.png
     - assets/space_marine.png
     - assets/tile.png
+    - assets/skull.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
