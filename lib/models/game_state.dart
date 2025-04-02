@@ -183,7 +183,7 @@ class GameState extends ChangeNotifier {
     target.hp -= attacker.damage;
 
     if (target.hp <= 0) {
-      board[targetRow][targetCol] = null;
+      target.hp = 0;
     }
 
     actedUnits.add(Offset(selectedCol.toDouble(), selectedRow.toDouble()));
