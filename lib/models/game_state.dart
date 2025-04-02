@@ -4,6 +4,7 @@ import 'unit.dart';
 import '../widgets/battle_log_panel.dart';
 
 class GameState extends ChangeNotifier {
+  int turnNumber = 1;
   List<List<Unit?>> board = List.generate(10, (index) => List.filled(14, null));
   Offset? selectedTile;
   String currentTurn = 'space_marine';
@@ -205,6 +206,9 @@ class GameState extends ChangeNotifier {
 
   void endTurn() {
     currentTurn = currentTurn == 'space_marine' ? 'tyranid' : 'space_marine';
+    if (currentTurn == 'space_marine') {
+      turnNumber++;
+    }
     actedUnits.clear();
     notifyListeners();
   }

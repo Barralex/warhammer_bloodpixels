@@ -228,11 +228,21 @@ class _GameBoardState extends State<GameBoard> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.brown[800],
-        title: Text(
-          gameState.currentTurn == 'space_marine'
-              ? "Space Marines' Turn"
-              : "Tyranids' Turn",
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "Turno ${gameState.turnNumber}",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 20),
+            Text(
+              gameState.currentTurn == 'space_marine'
+                  ? "Space Marines' Turn"
+                  : "Tyranids' Turn",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
         centerTitle: true,
       ),
