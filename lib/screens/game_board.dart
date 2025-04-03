@@ -108,8 +108,15 @@ class _GameBoardState extends State<GameBoard> {
     final cellWidth = box.size.width / 14;
     final cellHeight = box.size.height / 10;
 
-    final menuX = (col * cellWidth) + position.dx + (cellWidth / 2);
-    final menuY = (row * cellHeight) + position.dy + (cellHeight / 2);
+    final double menuSize = 150;
+    final menuX = ((col * cellWidth) + position.dx + (cellWidth / 2)).clamp(
+      position.dx + menuSize / 2,
+      position.dx + box.size.width - menuSize / 2,
+    );
+    final menuY = ((row * cellHeight) + position.dy + (cellHeight / 2)).clamp(
+      position.dy + menuSize / 2,
+      position.dy + box.size.height - menuSize / 2,
+    );
 
     showDialog(
       context: context,
