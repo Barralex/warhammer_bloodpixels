@@ -29,18 +29,49 @@ class BattleLogPanel extends StatelessWidget {
           const SizedBox(height: 8),
           Expanded(
             child: ListView.builder(
+              reverse: true,
+              padding: const EdgeInsets.only(
+                bottom: 60,
+              ), // espacio para el botón
               itemCount: logLines.length,
               itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Text(
-                    logLines[index],
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 13,
-                      fontFamily: 'monospace',
+                final reversedIndex = logLines.length - 1 - index;
+                final line = logLines[reversedIndex];
+                final bool showDivider =
+                    line.startsWith('Carga') ||
+                    line.startsWith('Marine') ||
+                    line.startsWith('Tiranido') ||
+                    line.startsWith('2 ataques');
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (showDivider)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4),
+                        child: Text(
+                          '------------------------',
+                          style: TextStyle(
+                            color: Colors.white24,
+                            fontSize: 12,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Text(
+                        line == '¡Todos los ataques fueron salvados!'
+                            ? 'Todos los impactos fueron salvados.'
+                            : line,
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 13,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 );
               },
             ),
