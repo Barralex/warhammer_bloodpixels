@@ -334,12 +334,8 @@ class GameState extends ChangeNotifier {
         int newCol = col + j;
         if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 14) {
           if (sqrt(i * i + j * j) <= unit.attackRange) {
-            // Solo incluir casillas con unidades enemigas
-            if (board[newRow][newCol] != null &&
-                board[newRow][newCol]!.type != unit.type &&
-                board[newRow][newCol]!.hp > 0) {
-              result.add(Offset(newCol.toDouble(), newRow.toDouble()));
-            }
+            // Cambio clave: incluye TODOS los tiles dentro del rango
+            result.add(Offset(newCol.toDouble(), newRow.toDouble()));
           }
         }
       }
