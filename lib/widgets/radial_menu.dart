@@ -4,12 +4,14 @@ class RadialMenu extends StatelessWidget {
   final Function() onMoveSelected;
   final Function() onAttackSelected;
   final Function() onEndTurnSelected;
+  final Function() onChargeSelected;
 
   const RadialMenu({
     Key? key,
     required this.onMoveSelected,
     required this.onAttackSelected,
     required this.onEndTurnSelected,
+    required this.onChargeSelected,
   }) : super(key: key);
 
   @override
@@ -47,6 +49,16 @@ class RadialMenu extends StatelessWidget {
               color: Colors.red,
               onTap: onAttackSelected,
               tooltip: 'Atacar',
+            ),
+          ),
+          Positioned(
+            bottom: 40,
+            right: 0,
+            child: _buildButton(
+              icon: Icons.sports_martial_arts,
+              color: Colors.green,
+              onTap: onChargeSelected,
+              tooltip: 'Cargar',
             ),
           ),
         ],

@@ -72,6 +72,16 @@ class _GameBoardState extends State<GameBoard> {
       return;
     }
 
+    // Si ya estamos en modo carga y clicamos un enemigo válido
+    if (gameState.actionMode == ActionMode.charge &&
+        gameState.attackRange.contains(tappedOffset) &&
+        unit?.type != gameState.currentTurn) {
+      await gameState.attemptCharge(row, col, context);
+      gameState.setActionMode(ActionMode.none);
+      _checkVictoryCondition(context);
+      return;
+    }
+
     // Si ya estamos en modo ataque y clicamos un enemigo válido
     if (gameState.actionMode == ActionMode.attack &&
         gameState.attackRange.contains(tappedOffset) &&
@@ -144,6 +154,28 @@ class _GameBoardState extends State<GameBoard> {
                 onAttackSelected: () {
                   gameState.setActionMode(ActionMode.attack);
                   Navigator.of(context).pop();
+                },
+                onChargeSelected: () {
+                  if (selectedUnit.type == gameState.currentTurn) {
+                    final selectedRow = gameState.selectedTile!.dy.toInt();
+                    final selectedCol = gameState.selectedTile!.dx.toInt();
+
+                    final range = <Offset>{};
+                    for (int r = 0; r < 10; r++) {
+                      for (int c = 0; c < 14; c++) {
+                        final distance = sqrt(
+                          pow(r - selectedRow, 2) + pow(c - selectedCol, 2),
+                        );
+                        if (distance <= 12) {
+                          range.add(Offset(c.toDouble(), r.toDouble()));
+                        }
+                      }
+                    }
+
+                    gameState.attackRange = range.toList();
+                    gameState.setActionMode(ActionMode.charge);
+                    Navigator.of(context).pop();
+                  }
                 },
                 onEndTurnSelected: () {
                   gameState.clearSelection();

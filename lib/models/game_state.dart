@@ -3,7 +3,7 @@ import 'dart:math';
 import 'unit.dart';
 import '../widgets/battle_log_panel.dart';
 
-enum ActionMode { none, move, attack }
+enum ActionMode { none, move, attack, charge }
 
 class GameState extends ChangeNotifier {
   ActionMode actionMode = ActionMode.none;
