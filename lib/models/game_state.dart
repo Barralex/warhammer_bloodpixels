@@ -75,6 +75,21 @@ class GameState extends ChangeNotifier {
     );
 
     if (distance <= attacker.attackRange) {
+      bool attackerEngaged = _isEngaged(selectedRow, selectedCol);
+      bool targetProtected = _enemyAdjacentToTarget(
+        selectedRow,
+        selectedCol,
+        targetRow,
+        targetCol,
+      );
+
+      if (attackerEngaged || targetProtected) {
+        battleLog.add('¡Disparo no permitido! Unidad en combate cercano.');
+        clearSelection();
+        notifyListeners();
+        return;
+      }
+
       _performAttack(selectedRow, selectedCol, targetRow, targetCol, context);
       clearSelection();
     }
@@ -210,6 +225,9 @@ class GameState extends ChangeNotifier {
 
         // Salva en 5+ para tiránidos, 3+ para marines
         int saveTarget = target.type == 'space_marine' ? 3 : 5;
+        battleLog.add(
+          'Objetivo (${target.type}) necesita $saveTarget+ para salvar',
+        );
         if (saveRoll >= saveTarget) {
           savedWounds++;
         }
@@ -240,6 +258,7 @@ class GameState extends ChangeNotifier {
     }
 
     actedUnits.add(Offset(selectedCol.toDouble(), selectedRow.toDouble()));
+    battleLog.add('---');
     notifyListeners();
   }
 
@@ -306,5 +325,55 @@ class GameState extends ChangeNotifier {
 
     notifyListeners();
     return total;
+  }
+
+  bool _isEngaged(int row, int col) {
+    final type = board[row][col]?.type;
+    if (type == null) return false;
+
+    for (int i = -1; i <= 1; i++) {
+      for (int j = -1; j <= 1; j++) {
+        if (i == 0 && j == 0) continue;
+        int newRow = row + i;
+        int newCol = col + j;
+        if (newRow >= 0 &&
+            newRow < 10 &&
+            newCol >= 0 &&
+            newCol < 14 &&
+            board[newRow][newCol]?.type != null &&
+            board[newRow][newCol]!.type != type) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool _enemyAdjacentToTarget(
+    int attackerRow,
+    int attackerCol,
+    int targetRow,
+    int targetCol,
+  ) {
+    final attackerType = board[attackerRow][attackerCol]?.type;
+    if (attackerType == null) return false;
+
+    for (int i = -1; i <= 1; i++) {
+      for (int j = -1; j <= 1; j++) {
+        if (i == 0 && j == 0) continue;
+        int newRow = attackerRow + i;
+        int newCol = attackerCol + j;
+        if (newRow >= 0 &&
+            newRow < 10 &&
+            newCol >= 0 &&
+            newCol < 14 &&
+            !(newRow == targetRow && newCol == targetCol) &&
+            board[newRow][newCol]?.type != null &&
+            board[newRow][newCol]!.type != attackerType) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
