@@ -3,7 +3,10 @@ import 'dart:math';
 import 'unit.dart';
 import '../widgets/battle_log_panel.dart';
 
+enum ActionMode { none, move, attack }
+
 class GameState extends ChangeNotifier {
+  ActionMode actionMode = ActionMode.none;
   int turnNumber = 1;
   List<List<Unit?>> board = List.generate(10, (index) => List.filled(14, null));
   Offset? selectedTile;
@@ -15,6 +18,31 @@ class GameState extends ChangeNotifier {
 
   GameState() {
     _initializeBoard();
+  }
+
+  void setActionMode(ActionMode mode) {
+    actionMode = mode;
+
+    // Solo calcular rangos cuando se elija un modo
+    if (selectedTile != null) {
+      int row = selectedTile!.dy.toInt();
+      int col = selectedTile!.dx.toInt();
+      Unit unit = board[row][col]!;
+
+      if (mode == ActionMode.move) {
+        moveRange = _calculateMoveRange(row, col, unit);
+        attackRange = []; // Limpiar el otro rango
+      } else if (mode == ActionMode.attack) {
+        attackRange = _calculateAttackRange(row, col, unit);
+        moveRange = []; // Limpiar el otro rango
+      } else {
+        // Limpiar ambos rangos si se cancela
+        moveRange = [];
+        attackRange = [];
+      }
+    }
+
+    notifyListeners();
   }
 
   void _initializeBoard() {
@@ -37,8 +65,9 @@ class GameState extends ChangeNotifier {
 
     if (unit?.type == currentTurn) {
       selectedTile = Offset(col.toDouble(), row.toDouble());
-      moveRange = _calculateMoveRange(row, col, unit!);
-      attackRange = _calculateAttackRange(row, col, unit);
+      // No calculamos rangos aquí - esperamos a que el usuario seleccione una acción
+      moveRange = [];
+      attackRange = [];
       notifyListeners();
     }
   }
@@ -266,6 +295,7 @@ class GameState extends ChangeNotifier {
     selectedTile = null;
     moveRange = [];
     attackRange = [];
+    actionMode = ActionMode.none; // Reset del modo de acción
     notifyListeners();
   }
 
@@ -275,6 +305,7 @@ class GameState extends ChangeNotifier {
       turnNumber++;
     }
     actedUnits.clear();
+    clearSelection(); // Limpiar selección al final del turno
     notifyListeners();
   }
 
@@ -285,7 +316,8 @@ class GameState extends ChangeNotifier {
         int newRow = row + i;
         int newCol = col + j;
         if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 14) {
-          if (sqrt(i * i + j * j) <= unit.movement) {
+          if (sqrt(i * i + j * j) <= unit.movement &&
+              board[newRow][newCol] == null) {
             result.add(Offset(newCol.toDouble(), newRow.toDouble()));
           }
         }
@@ -302,7 +334,12 @@ class GameState extends ChangeNotifier {
         int newCol = col + j;
         if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 14) {
           if (sqrt(i * i + j * j) <= unit.attackRange) {
-            result.add(Offset(newCol.toDouble(), newRow.toDouble()));
+            // Solo incluir casillas con unidades enemigas
+            if (board[newRow][newCol] != null &&
+                board[newRow][newCol]!.type != unit.type &&
+                board[newRow][newCol]!.hp > 0) {
+              result.add(Offset(newCol.toDouble(), newRow.toDouble()));
+            }
           }
         }
       }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/unit.dart';
+import '../models/game_state.dart'; // Asegúrate de importar esto
 
 class GameTile extends StatelessWidget {
   final int row;
@@ -11,6 +12,7 @@ class GameTile extends StatelessWidget {
   final bool hasActed;
   final List<List<Unit?>> board;
   final Function(int, int) onTap;
+  final ActionMode actionMode; // Nueva propiedad
 
   const GameTile({
     Key? key,
@@ -23,6 +25,7 @@ class GameTile extends StatelessWidget {
     required this.hasActed,
     required this.board,
     required this.onTap,
+    required this.actionMode, // Añadido al constructor
   }) : super(key: key);
 
   @override
@@ -49,8 +52,10 @@ class GameTile extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Blue highlight for movement range
-            if (inMoveRange)
+            // Blue highlight solo cuando estamos en modo movimiento
+            if (inMoveRange &&
+                (actionMode == ActionMode.move ||
+                    actionMode == ActionMode.none))
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
@@ -60,8 +65,10 @@ class GameTile extends StatelessWidget {
                 ),
               ),
 
-            // Red highlight for attack range
-            if (inAttackRange)
+            // Red highlight solo cuando estamos en modo ataque
+            if (inAttackRange &&
+                (actionMode == ActionMode.attack ||
+                    actionMode == ActionMode.none))
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
@@ -71,7 +78,7 @@ class GameTile extends StatelessWidget {
                 ),
               ),
 
-            // Indicate if unit is engaged
+            // Indica si la unidad está trabada en combate
             if (unit != null && unit!.hp > 0 && _isEngaged(row, col))
               const Positioned(
                 top: 4,
@@ -82,7 +89,7 @@ class GameTile extends StatelessWidget {
                 ),
               ),
 
-            // Unit display
+            // Mostrar la unidad
             if (unit != null)
               Stack(
                 children: [

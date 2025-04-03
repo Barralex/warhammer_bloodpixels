@@ -5,6 +5,7 @@ import '../models/unit.dart';
 import '../widgets/game_tile.dart';
 import '../widgets/dice_roller.dart';
 import '../widgets/battle_log_panel.dart';
+import '../widgets/radial_menu.dart'; // Importar el menú radial
 
 class GameBoard extends StatefulWidget {
   @override
@@ -61,95 +62,122 @@ class _GameBoardState extends State<GameBoard> {
     Unit? unit = gameState.board[row][col];
     Offset tappedOffset = Offset(col.toDouble(), row.toDouble());
 
-    // Selected a friendly unit
+    // Si ya estamos en modo movimiento y clicamos en un espacio válido
+    if (gameState.actionMode == ActionMode.move &&
+        gameState.moveRange.contains(tappedOffset) &&
+        unit == null) {
+      gameState.moveUnit(row, col);
+      gameState.setActionMode(ActionMode.none);
+      _checkVictoryCondition(context);
+      return;
+    }
+
+    // Si ya estamos en modo ataque y clicamos un enemigo válido
+    if (gameState.actionMode == ActionMode.attack &&
+        gameState.attackRange.contains(tappedOffset) &&
+        unit?.type != gameState.currentTurn) {
+      gameState.attack(row, col, context);
+      gameState.setActionMode(ActionMode.none);
+      _checkVictoryCondition(context);
+      return;
+    }
+
+    // Seleccionar una unidad amiga que no haya actuado
     if (unit?.type == gameState.currentTurn &&
         !gameState.actedUnits.contains(tappedOffset)) {
       gameState.selectTile(row, col);
+      // Mostrar menú radial
+      _showRadialMenu(context, row, col);
+    } else {
+      // Si clicamos en cualquier otra parte, limpiamos selección
+      gameState.clearSelection();
     }
-    // Move to empty tile
-    else if (gameState.selectedTile != null && unit == null) {
-      final selected = gameState.selectedTile!;
-      final selectedRow = selected.dy.toInt();
-      final selectedCol = selected.dx.toInt();
-      final Unit selectedUnit = gameState.board[selectedRow][selectedCol]!;
+  }
 
-      bool isLockedInCombat = false;
-      final adjacentOffsets = [
-        Offset(0, 1),
-        Offset(1, 0),
-        Offset(0, -1),
-        Offset(-1, 0),
-      ];
+  void _showRadialMenu(BuildContext context, int row, int col) {
+    final selectedRow = gameState.selectedTile!.dy.toInt();
+    final selectedCol = gameState.selectedTile!.dx.toInt();
+    final selectedUnit = gameState.board[selectedRow][selectedCol]!;
 
-      for (final offset in adjacentOffsets) {
-        final newRow = selectedRow + offset.dy.toInt();
-        final newCol = selectedCol + offset.dx.toInt();
+    // Comprobar si la unidad está trabada en combate
+    bool isLockedInCombat = _isEngaged(selectedRow, selectedCol);
 
-        if (newRow >= 0 &&
-            newRow < 10 &&
-            newCol >= 0 &&
-            newCol < 14 &&
-            gameState.board[newRow][newCol] != null &&
-            gameState.board[newRow][newCol]!.type != selectedUnit.type &&
-            gameState.board[newRow][newCol]!.hp > 0) {
-          isLockedInCombat = true;
-          break;
-        }
-      }
+    // Calcular posición en pantalla para el menú
+    final RenderBox box = context.findRenderObject() as RenderBox;
+    final Offset position = box.localToGlobal(Offset.zero);
+    final cellWidth = box.size.width / 14;
+    final cellHeight = box.size.height / 10;
 
-      if (isLockedInCombat) {
-        return; // No puede moverse
-      }
+    final menuX = (col * cellWidth) + position.dx + (cellWidth / 2);
+    final menuY = (row * cellHeight) + position.dy + (cellHeight / 2);
 
-      if (gameState.moveRange.contains(tappedOffset)) {
-        gameState.moveUnit(row, col);
-        _checkVictoryCondition(context);
-      }
-    }
-    // Attack enemy unit
-    else if (gameState.selectedTile != null &&
-        unit?.type != gameState.currentTurn &&
-        unit != null) {
-      int selectedRow = gameState.selectedTile!.dy.toInt();
-      int selectedCol = gameState.selectedTile!.dx.toInt();
-      Unit attacker = gameState.board[selectedRow][selectedCol]!;
-
-      double distance = _calculateDistance(selectedRow, selectedCol, row, col);
-
-      // Normal attack
-      if (distance <= attacker.attackRange) {
-        gameState.attack(row, col, context);
-        _checkVictoryCondition(context);
-      }
-      // Attempt charge (Tyranid specific)
-      else if (attacker.type == 'tyranid' &&
-          attacker.attackRange == 1 &&
-          distance <= 12) {
-        int d1 = Random().nextInt(6) + 1;
-        int d2 = Random().nextInt(6) + 1;
-        int chargeRoll = d1 + d2;
-
-        gameState.battleLog.add(
-          'Carga: tirada $d1 + $d2 = $chargeRoll contra distancia ${distance.round()}',
+    showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      builder: (context) {
+        return Stack(
+          children: [
+            Positioned(
+              left: menuX - 75, // Centrar menú (150/2)
+              top: menuY - 75, // Centrar menú (150/2)
+              child: RadialMenu(
+                onMoveSelected: () {
+                  if (!isLockedInCombat) {
+                    gameState.setActionMode(ActionMode.move);
+                    Navigator.of(context).pop();
+                  } else {
+                    // Mostrar mensaje "No puedes moverte mientras estás trabado"
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'No puedes moverte mientras estás trabado en combate',
+                        ),
+                      ),
+                    );
+                  }
+                },
+                onAttackSelected: () {
+                  gameState.setActionMode(ActionMode.attack);
+                  Navigator.of(context).pop();
+                },
+                onEndTurnSelected: () {
+                  gameState.clearSelection();
+                  Navigator.of(context).pop();
+                },
+              ),
+            ),
+          ],
         );
-        gameState.battleLog.add(
-          chargeRoll >= distance ? 'Carga exitosa.' : 'Carga fallida.',
-        );
-        gameState.notifyListeners();
+      },
+    );
+  }
 
-        if (chargeRoll >= distance) {
-          _handleSuccessfulCharge(row, col, selectedRow, selectedCol);
-        } else {
-          // Failed charge
-          setState(() {
-            gameState.actedUnits.add(
-              Offset(selectedCol.toDouble(), selectedRow.toDouble()),
-            );
-            gameState.clearSelection();
-          });
-        }
+  bool _isEngaged(int row, int col) {
+    final type = gameState.board[row][col]?.type;
+    if (type == null) return false;
+
+    final adjacentOffsets = [
+      Offset(0, 1),
+      Offset(1, 0),
+      Offset(0, -1),
+      Offset(-1, 0),
+    ];
+
+    for (final offset in adjacentOffsets) {
+      final newRow = row + offset.dy.toInt();
+      final newCol = col + offset.dx.toInt();
+
+      if (newRow >= 0 &&
+          newRow < 10 &&
+          newCol >= 0 &&
+          newCol < 14 &&
+          gameState.board[newRow][newCol] != null &&
+          gameState.board[newRow][newCol]!.type != type &&
+          gameState.board[newRow][newCol]!.hp > 0) {
+        return true;
       }
     }
+    return false;
   }
 
   double _calculateDistance(int fromRow, int fromCol, int toRow, int toCol) {
@@ -302,6 +330,8 @@ class _GameBoardState extends State<GameBoard> {
                         ),
                         onTap: _onTileTapped,
                         board: gameState.board,
+                        actionMode:
+                            gameState.actionMode, // Añadir este parámetro
                       );
                     },
                   ),
