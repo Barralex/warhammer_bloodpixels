@@ -75,7 +75,7 @@ class GameState extends ChangeNotifier {
     );
 
     if (distance <= attacker.attackRange) {
-      _performAttack(selectedRow, selectedCol, targetRow, targetCol);
+      _performAttack(selectedRow, selectedCol, targetRow, targetCol, context);
       clearSelection();
     }
   }
@@ -104,7 +104,7 @@ class GameState extends ChangeNotifier {
       );
 
       if (chargeRoll >= distance) {
-        _performAttack(selectedRow, selectedCol, targetRow, targetCol);
+        _performAttack(selectedRow, selectedCol, targetRow, targetCol, context);
 
         Offset finalOffset = Offset(
           selectedCol.toDouble(),
@@ -170,27 +170,73 @@ class GameState extends ChangeNotifier {
     return Offset(selectedCol.toDouble(), selectedRow.toDouble());
   }
 
-  void _performAttack(
+  Future<void> _performAttack(
     int selectedRow,
     int selectedCol,
     int targetRow,
     int targetCol,
-  ) {
+    BuildContext context,
+  ) async {
     Unit attacker = board[selectedRow][selectedCol]!;
     Unit target = board[targetRow][targetCol]!;
 
-    int damage = attacker.damage;
-    target.hp -= damage;
+    // Número de ataques (2 para marines con bólter)
+    int numAttacks = attacker.type == 'space_marine' ? 2 : 1;
+    int successfulHits = 0;
 
-    String attackerType =
-        attacker.type == 'space_marine' ? 'Marine' : 'Tiranido';
-    String targetType = target.type == 'space_marine' ? 'Marine' : 'Tiranido';
+    List<int> hitRolls = [];
 
-    battleLog.add('$attackerType ataca a $targetType por $damage de daño');
+    // Tiradas para impactar
+    for (int i = 0; i < numAttacks; i++) {
+      int hitRoll = Random().nextInt(6) + 1;
+      hitRolls.add(hitRoll);
 
-    if (target.hp <= 0) {
-      target.hp = 0;
-      battleLog.add('$targetType muere ☠️');
+      // Comprueba si impacta (BS o mejor)
+      if (hitRoll >= attacker.weaponBS) {
+        successfulHits++;
+      }
+    }
+
+    battleLog.add('$numAttacks ataques: Tiradas ${hitRolls.join(', ')}');
+    battleLog.add('Impactos: $successfulHits');
+
+    // Tiradas de salvación
+    int savedWounds = 0;
+    if (successfulHits > 0) {
+      List<int> saveRolls = [];
+      for (int i = 0; i < successfulHits; i++) {
+        int saveRoll = Random().nextInt(6) + 1;
+        saveRolls.add(saveRoll);
+
+        // Salva en 5+ para tiránidos, 3+ para marines
+        int saveTarget = target.type == 'space_marine' ? 3 : 5;
+        if (saveRoll >= saveTarget) {
+          savedWounds++;
+        }
+      }
+
+      battleLog.add('Salvación: Tiradas ${saveRolls.join(', ')}');
+      battleLog.add('Salvados: $savedWounds');
+    }
+
+    // Aplica daño
+    int woundsToApply = successfulHits - savedWounds;
+    if (woundsToApply > 0) {
+      target.hp -= woundsToApply * attacker.damage;
+
+      // Registra el ataque
+      String attackerType =
+          attacker.type == 'space_marine' ? 'Marine' : 'Tiranido';
+      String targetType = target.type == 'space_marine' ? 'Marine' : 'Tiranido';
+
+      battleLog.add('$attackerType causa $woundsToApply heridas a $targetType');
+
+      if (target.hp <= 0) {
+        target.hp = 0;
+        battleLog.add('$targetType muere ☠️');
+      }
+    } else {
+      battleLog.add('¡Todos los ataques fueron salvados!');
     }
 
     actedUnits.add(Offset(selectedCol.toDouble(), selectedRow.toDouble()));
