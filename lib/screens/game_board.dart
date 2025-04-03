@@ -125,22 +125,20 @@ class _GameBoardState extends State<GameBoard> {
         return Stack(
           children: [
             Positioned(
-              left: menuX - 75, // Centrar menú (150/2)
-              top: menuY - 75, // Centrar menú (150/2)
+              left: menuX - 75,
+              top: menuY - 75,
               child: RadialMenu(
                 onMoveSelected: () {
                   if (!isLockedInCombat) {
                     gameState.setActionMode(ActionMode.move);
                     Navigator.of(context).pop();
                   } else {
-                    // Mostrar mensaje "No puedes moverte mientras estás trabado"
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'No puedes moverte mientras estás trabado en combate',
-                        ),
-                      ),
+                    // Registrar en el log en lugar de mostrar SnackBar
+                    gameState.battleLog.add(
+                      'Unidad trabada en combate. No puede moverse.',
                     );
+                    gameState.notifyListeners();
+                    Navigator.of(context).pop();
                   }
                 },
                 onAttackSelected: () {
