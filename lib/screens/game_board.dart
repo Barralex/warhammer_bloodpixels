@@ -3,7 +3,6 @@ import 'dart:math';
 import '../models/game_state.dart';
 import '../models/unit.dart';
 import '../widgets/game_tile.dart';
-import '../widgets/dice_roller.dart';
 import '../widgets/battle_log_panel.dart';
 import '../widgets/unit_action_panel.dart';
 
@@ -60,14 +59,12 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   void _onTileTapped(int row, int col) async {
-    // Cerrar cualquier menú abierto al tocar en cualquier lugar
     _currentMenuOverlay?.remove();
     _currentMenuOverlay = null;
 
     Unit? unit = gameState.board[row][col];
     Offset tappedOffset = Offset(col.toDouble(), row.toDouble());
 
-    // Si ya estamos en modo movimiento y clicamos en un espacio válido
     if (gameState.actionMode == ActionMode.move &&
         gameState.moveRange.contains(tappedOffset) &&
         unit == null) {
@@ -77,7 +74,6 @@ class _GameBoardState extends State<GameBoard> {
       return;
     }
 
-    // Si ya estamos en modo carga y clicamos un enemigo válido
     if (gameState.actionMode == ActionMode.charge &&
         unit?.type != gameState.currentTurn) {
       await gameState.attemptCharge(row, col, context);
@@ -86,7 +82,6 @@ class _GameBoardState extends State<GameBoard> {
       return;
     }
 
-    // Si ya estamos en modo ataque y clicamos un enemigo válido
     if (gameState.actionMode == ActionMode.attack &&
         gameState.attackRange.contains(tappedOffset) &&
         unit?.type != gameState.currentTurn) {
@@ -96,7 +91,6 @@ class _GameBoardState extends State<GameBoard> {
       return;
     }
 
-    // Si estamos en modo combate cuerpo a cuerpo
     if (gameState.actionMode == ActionMode.melee &&
         unit?.type != gameState.currentTurn) {
       double distance = _calculateDistance(
@@ -107,7 +101,6 @@ class _GameBoardState extends State<GameBoard> {
       );
 
       if (distance <= 1.5) {
-        // Aproximadamente 1" en el juego
         gameState.performMeleeAttack(row, col, context);
         gameState.setActionMode(ActionMode.none);
         _checkVictoryCondition(context);
@@ -115,21 +108,16 @@ class _GameBoardState extends State<GameBoard> {
       }
     }
 
-    // Seleccionar una unidad amiga que no haya actuado
     if (unit?.type == gameState.currentTurn &&
         !gameState.actedUnits.contains(tappedOffset)) {
       gameState.selectTile(row, col);
-      // Mostrar menú de acciones
       _showUnitActionPanel(context, row, col);
     } else {
-      // Si clicamos en cualquier otra parte, limpiamos selección
       gameState.clearSelection();
     }
   }
 
-  // Solo reemplaza la función _showUnitActionPanel en tu game_board.dart:
   void _showUnitActionPanel(BuildContext context, int row, int col) {
-    // Remover cualquier menú existente
     _currentMenuOverlay?.remove();
 
     if (gameState.selectedTile == null) return;
@@ -138,60 +126,48 @@ class _GameBoardState extends State<GameBoard> {
     final selectedCol = gameState.selectedTile!.dx.toInt();
     final selectedUnit = gameState.board[selectedRow][selectedCol]!;
 
-    // Verificar si la unidad está trabada en combate
     bool isEngaged = _isEngaged(selectedRow, selectedCol);
 
-    // Obtener la posición global del tile seleccionado
     final RenderBox box = context.findRenderObject() as RenderBox;
     final Offset position = box.localToGlobal(Offset.zero);
     final double cellWidth = box.size.width / 14;
     final double cellHeight = box.size.height / 10;
 
-    // Calcular las coordenadas del tablero
     final double boardLeft = position.dx;
     final double boardRight = position.dx + box.size.width;
     final double boardTop = position.dy;
     final double boardBottom = position.dy + box.size.height;
 
-    // Ancho del panel
     const double panelWidth = 40;
 
-    // Intentar colocar el menú a la derecha del tile seleccionado
     double panelX = ((selectedCol + 1) * cellWidth) + position.dx;
 
-    // Si se sale por la derecha, intentar a la izquierda
     if (panelX + panelWidth > boardRight) {
       panelX = (selectedCol * cellWidth) - panelWidth + position.dx;
     }
 
-    // Si también se sale por la izquierda, colocar sobre la unidad
     if (panelX < boardLeft) {
       panelX = (selectedCol * cellWidth) + position.dx;
     }
 
-    // Calcular altura aproximada del panel
     const double buttonHeight = 40;
-    const double buttonCount = 5; // Mover, Disparar, Cargar, Combate, Cancelar
+    const double buttonCount = 5;
     const double panelHeight = buttonHeight * buttonCount;
 
-    // Posición vertical: intentar centrar con la unidad
     double panelY =
         (selectedRow * cellHeight) +
         (cellHeight / 2) -
         (panelHeight / 2) +
         position.dy;
 
-    // Si se sale por arriba
     if (panelY < boardTop) {
       panelY = boardTop;
     }
 
-    // Si se sale por abajo
     if (panelY + panelHeight > boardBottom) {
       panelY = boardBottom - panelHeight;
     }
 
-    // Mostrar el panel como overlay
     OverlayState? overlay = Overlay.of(context);
 
     _currentMenuOverlay = OverlayEntry(
@@ -295,7 +271,6 @@ class _GameBoardState extends State<GameBoard> {
   ) {
     Unit attacker = gameState.board[selectedRow][selectedCol]!;
 
-    // Perform attack manually since we're in a special case
     Unit target = gameState.board[targetRow][targetCol]!;
     target.hp -= attacker.damage;
 
@@ -303,16 +278,13 @@ class _GameBoardState extends State<GameBoard> {
       target.hp = 0;
     }
 
-    // Set initial position for the attacker
     Offset finalOffset = Offset(selectedCol.toDouble(), selectedRow.toDouble());
 
-    // Try to move to target position if empty
     if (gameState.board[targetRow][targetCol] == null) {
       gameState.board[targetRow][targetCol] = attacker;
       gameState.board[selectedRow][selectedCol] = null;
       finalOffset = Offset(targetCol.toDouble(), targetRow.toDouble());
     } else {
-      // Find adjacent spot
       final directions = [
         [0, 1],
         [1, 0],
@@ -355,9 +327,7 @@ class _GameBoardState extends State<GameBoard> {
         isMarineTurn ? 'assets/space_marine.png' : 'assets/tyranid.png';
 
     Color backgroundColor =
-        isMarineTurn
-            ? const Color(0xFF0B1E36) // azul oscuro marines
-            : const Color(0xFF3A0D0D); // rojo púrpura tiránidos
+        isMarineTurn ? const Color(0xFF0B1E36) : const Color(0xFF3A0D0D);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
@@ -451,7 +421,6 @@ class _GameBoardState extends State<GameBoard> {
         padding: const EdgeInsets.only(bottom: 12, right: 12),
         child: ElevatedButton.icon(
           onPressed: () {
-            // Cerrar cualquier menú abierto al finalizar turno
             _currentMenuOverlay?.remove();
             _currentMenuOverlay = null;
             gameState.endTurn();

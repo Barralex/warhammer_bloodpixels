@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'unit.dart';
-import '../widgets/battle_log_panel.dart';
 
 enum ActionMode { none, move, attack, charge, melee }
 
@@ -42,7 +41,6 @@ class GameState extends ChangeNotifier {
         moveRange = [];
         attackRange = [];
       } else if (mode == ActionMode.melee) {
-        // Para combate, no necesitamos calcular rangos especiales
         moveRange = [];
         attackRange = [];
         chargeRange = [];

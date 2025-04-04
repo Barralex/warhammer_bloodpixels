@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/unit.dart';
-import '../models/game_state.dart';
 
 class UnitActionPanel extends StatelessWidget {
   final Function() onMoveSelected;
@@ -26,9 +25,7 @@ class UnitActionPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isSpaceMarine = selectedUnit.type == 'space_marine';
     final Color mainColor =
-        isSpaceMarine
-            ? const Color(0xFF0B1E36) // Space Marine blue
-            : const Color(0xFF3A0D0D); // Tyranid purple-red
+        isSpaceMarine ? const Color(0xFF0B1E36) : const Color(0xFF3A0D0D);
 
     return Container(
       width: 40,
@@ -46,41 +43,31 @@ class UnitActionPanel extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Move button
           _buildActionButton(
             icon: Icons.directions_walk,
             color: const Color(0xFF0B1E36),
             onTap: onMoveSelected,
             enabled: !isEngaged,
           ),
-
-          // Attack button
           _buildActionButton(
             icon: Icons.gps_fixed,
             color: const Color(0xFF600000),
             onTap: onAttackSelected,
             enabled: true,
           ),
-
-          // Charge button
           _buildActionButton(
             icon: Icons.sports_martial_arts,
             color: const Color(0xFF143400),
             onTap: onChargeSelected,
             enabled: true,
           ),
-
-          // Melee button
           _buildActionButton(
             icon: Icons.sports_kabaddi,
             color: const Color(0xFF3A0D0D),
             onTap: onMeleeSelected,
             enabled: isEngaged,
           ),
-
           const Divider(height: 1, color: Color(0xFF444444)),
-
-          // Cancel button
           _buildActionButton(
             icon: Icons.close,
             color: Colors.grey.shade800,
