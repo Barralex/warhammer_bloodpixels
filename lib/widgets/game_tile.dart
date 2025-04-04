@@ -177,7 +177,7 @@ class GameTile extends StatelessWidget {
           newCol >= 0 &&
           newCol < 14 &&
           board[newRow][newCol] != null &&
-          board[newRow][newCol]!.type != unit!.type &&
+          board[newRow][newCol]!.faction != unit!.faction &&
           board[newRow][newCol]!.hp > 0) {
         return true;
       }

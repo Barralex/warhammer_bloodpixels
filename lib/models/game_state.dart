@@ -484,10 +484,7 @@ class GameState extends ChangeNotifier {
         if (i == 0 && j == 0) continue;
         int newRow = row + i;
         int newCol = col + j;
-        if (newRow >= 0 &&
-            newRow < 10 &&
-            newCol >= 0 &&
-            newCol < 14) {
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 14) {
           final neighbor = board[newRow][newCol];
           if (neighbor != null && neighbor.faction != unit.faction) {
             return true;
