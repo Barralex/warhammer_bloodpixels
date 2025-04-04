@@ -80,12 +80,12 @@ class GameTile extends StatelessWidget {
                 ),
               ),
 
-            // Green highlight para modo carga
+            // Purple highlight para modo carga
             if (inChargeRange && actionMode == ActionMode.charge)
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.3),
+                    color: Colors.purple.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(50),
                   ),
                 ),

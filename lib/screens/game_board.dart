@@ -171,7 +171,7 @@ class _GameBoardState extends State<GameBoard> {
                       }
                     }
 
-                    gameState.attackRange = range.toList();
+                    gameState.chargeRange = range.toList();
                     gameState.setActionMode(ActionMode.charge);
                     Navigator.of(context).pop();
                   }
@@ -362,7 +362,7 @@ class _GameBoardState extends State<GameBoard> {
                         inAttackRange: gameState.attackRange.contains(
                           Offset(col.toDouble(), row.toDouble()),
                         ),
-                        inChargeRange: gameState.attackRange.contains(
+                        inChargeRange: gameState.chargeRange.contains(
                           // Reusamos attackRange para carga
                           Offset(col.toDouble(), row.toDouble()),
                         ),
