@@ -325,7 +325,9 @@ class _GameBoardState extends State<GameBoard> {
     bool isMarineTurn = gameState.currentTurn == 'space_marine';
     String factionName = isMarineTurn ? "Space Marines" : "Tiranidos";
     String imageAsset =
-        isMarineTurn ? 'assets/space_marine.png' : 'assets/tyranid.png';
+        isMarineTurn
+            ? 'assets/space_marine.png'
+            : 'assets/tyranids/default.png';
 
     Color backgroundColor =
         isMarineTurn ? const Color(0xFF0B1E36) : const Color(0xFF3A0D0D);
