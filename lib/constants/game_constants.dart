@@ -1,7 +1,7 @@
 class GameConstants {
   // Dimensiones del tablero
-  static const int BOARD_ROWS = 10;
-  static const int BOARD_COLS = 14;
+  static const int BOARD_ROWS = 14;
+  static const int BOARD_COLS = 20;
 
   // Distancias y rangos comunes
   static const double ENGAGEMENT_RANGE =
