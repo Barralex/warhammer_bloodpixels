@@ -251,7 +251,8 @@ class _GameBoardState extends State<GameBoard> {
           newCol >= 0 &&
           newCol < 14 &&
           gameState.board[newRow][newCol] != null &&
-          gameState.board[newRow][newCol]!.type != type &&
+          gameState.board[newRow][newCol]!.faction !=
+              gameState.board[row][col]!.faction &&
           gameState.board[newRow][newCol]!.hp > 0) {
         return true;
       }
