@@ -3,7 +3,7 @@ import 'dart:math';
 import 'unit.dart';
 import '../widgets/battle_log_panel.dart';
 
-enum ActionMode { none, move, attack, charge }
+enum ActionMode { none, move, attack, charge, melee }
 
 class GameState extends ChangeNotifier {
   ActionMode actionMode = ActionMode.none;
@@ -41,6 +41,11 @@ class GameState extends ChangeNotifier {
         chargeRange = _calculateChargeRange(row, col, unit);
         moveRange = [];
         attackRange = [];
+      } else if (mode == ActionMode.melee) {
+        // Para combate, no necesitamos calcular rangos especiales
+        moveRange = [];
+        attackRange = [];
+        chargeRange = [];
       } else {
         moveRange = [];
         attackRange = [];
@@ -173,8 +178,7 @@ class GameState extends ChangeNotifier {
       battleLog.add('Distancia de carga: $distance, Tirada: $chargeRoll');
 
       if (chargeRoll >= distance) {
-        _performAttack(selectedRow, selectedCol, targetRow, targetCol, context);
-
+        // Ya no hacemos daño aquí, solo movemos la unidad
         // Mover unidad atacante cerca del objetivo
         Offset finalOffset = _findAdjacentSpot(
           selectedRow,
@@ -185,7 +189,9 @@ class GameState extends ChangeNotifier {
         );
 
         actedUnits.add(finalOffset);
-        battleLog.add('¡Carga exitosa!');
+        battleLog.add(
+          '¡Carga exitosa! Ahora puedes atacar en combate cuerpo a cuerpo.',
+        );
       } else {
         actedUnits.add(Offset(selectedCol.toDouble(), selectedRow.toDouble()));
         battleLog.add('Carga fallida');
@@ -229,6 +235,99 @@ class GameState extends ChangeNotifier {
     }
 
     return Offset(selectedCol.toDouble(), selectedRow.toDouble());
+  }
+
+  void performMeleeAttack(int targetRow, int targetCol, BuildContext context) {
+    if (selectedTile == null) return;
+
+    int selectedRow = selectedTile!.dy.toInt();
+    int selectedCol = selectedTile!.dx.toInt();
+    Unit attacker = board[selectedRow][selectedCol]!;
+    Unit target = board[targetRow][targetCol]!;
+
+    // Verificar que están a 1" de distancia
+    double distance = sqrt(
+      pow(targetRow - selectedRow, 2) + pow(targetCol - selectedCol, 2),
+    );
+
+    if (distance <= 1.5) {
+      // Usamos 1.5 para capturar casillas diagonales
+      // Número de ataques según el tipo de unidad
+      int numAttacks =
+          attacker.type == 'space_marine'
+              ? 2
+              : (attacker.type == 'tyranid')
+              ? 1
+              : 1;
+
+      battleLog.add(
+        '${attacker.type == 'space_marine' ? 'Marine' : 'Tiranido'} realiza $numAttacks ataques cuerpo a cuerpo',
+      );
+
+      int successfulHits = 0;
+      List<int> hitRolls = [];
+
+      // Tiradas para impactar en combate (más sencillo de impactar en cuerpo a cuerpo)
+      for (int i = 0; i < numAttacks; i++) {
+        int hitRoll = Random().nextInt(6) + 1;
+        hitRolls.add(hitRoll);
+
+        // En combate cuerpo a cuerpo, impacta con 3+ para marines y 4+ para tiránidos
+        int hitTarget = attacker.type == 'space_marine' ? 3 : 4;
+        if (hitRoll >= hitTarget) {
+          successfulHits++;
+        }
+      }
+
+      battleLog.add('Tiradas para impactar: ${hitRolls.join(', ')}');
+      battleLog.add('Impactos: $successfulHits');
+
+      // Tiradas de salvación
+      int savedWounds = 0;
+      if (successfulHits > 0) {
+        List<int> saveRolls = [];
+        for (int i = 0; i < successfulHits; i++) {
+          int saveRoll = Random().nextInt(6) + 1;
+          saveRolls.add(saveRoll);
+
+          // Salva en 5+ para tiránidos, 3+ para marines
+          int saveTarget = target.type == 'space_marine' ? 3 : 5;
+          if (saveRoll >= saveTarget) {
+            savedWounds++;
+          }
+        }
+
+        battleLog.add('Tiradas de salvación: ${saveRolls.join(', ')}');
+        battleLog.add('Salvados: $savedWounds');
+      }
+
+      // Aplica daño
+      int woundsToApply = successfulHits - savedWounds;
+      if (woundsToApply > 0) {
+        target.hp -= woundsToApply * attacker.damage;
+
+        // Registra el ataque
+        String attackerType =
+            attacker.type == 'space_marine' ? 'Marine' : 'Tiranido';
+        String targetType =
+            target.type == 'space_marine' ? 'Marine' : 'Tiranido';
+
+        battleLog.add(
+          '$attackerType causa $woundsToApply heridas a $targetType en combate cuerpo a cuerpo',
+        );
+
+        if (target.hp <= 0) {
+          target.hp = 0;
+          battleLog.add('$targetType muere ☠️');
+        }
+      } else {
+        battleLog.add('¡Todos los ataques fueron salvados!');
+      }
+
+      actedUnits.add(Offset(selectedCol.toDouble(), selectedRow.toDouble()));
+      battleLog.add('---');
+      notifyListeners();
+    }
   }
 
   Future<void> _performAttack(

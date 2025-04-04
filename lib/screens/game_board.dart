@@ -5,7 +5,7 @@ import '../models/unit.dart';
 import '../widgets/game_tile.dart';
 import '../widgets/dice_roller.dart';
 import '../widgets/battle_log_panel.dart';
-import '../widgets/radial_menu.dart'; // Importar el menú radial
+import '../widgets/radial_menu.dart';
 
 class GameBoard extends StatefulWidget {
   @override
@@ -91,6 +91,25 @@ class _GameBoardState extends State<GameBoard> {
       return;
     }
 
+    // Si estamos en modo combate cuerpo a cuerpo
+    if (gameState.actionMode == ActionMode.melee &&
+        unit?.type != gameState.currentTurn) {
+      double distance = _calculateDistance(
+        gameState.selectedTile!.dy.toInt(),
+        gameState.selectedTile!.dx.toInt(),
+        row,
+        col,
+      );
+
+      if (distance <= 1.5) {
+        // Aproximadamente 1" en el juego
+        gameState.performMeleeAttack(row, col, context);
+        gameState.setActionMode(ActionMode.none);
+        _checkVictoryCondition(context);
+        return;
+      }
+    }
+
     // Seleccionar una unidad amiga que no haya actuado
     if (unit?.type == gameState.currentTurn &&
         !gameState.actedUnits.contains(tappedOffset)) {
@@ -110,6 +129,7 @@ class _GameBoardState extends State<GameBoard> {
 
     // Comprobar si la unidad está trabada en combate
     bool isLockedInCombat = _isEngaged(selectedRow, selectedCol);
+    bool canMelee = isLockedInCombat;
 
     // Calcular posición en pantalla para el menú
     final RenderBox box = context.findRenderObject() as RenderBox;
@@ -142,7 +162,6 @@ class _GameBoardState extends State<GameBoard> {
                     gameState.setActionMode(ActionMode.move);
                     Navigator.of(context).pop();
                   } else {
-                    // Registrar en el log en lugar de mostrar SnackBar
                     gameState.battleLog.add(
                       'Unidad trabada en combate. No puede moverse.',
                     );
@@ -157,6 +176,18 @@ class _GameBoardState extends State<GameBoard> {
                 onChargeSelected: () {
                   if (selectedUnit.type == gameState.currentTurn) {
                     gameState.setActionMode(ActionMode.charge);
+                    Navigator.of(context).pop();
+                  }
+                },
+                onMeleeSelected: () {
+                  if (canMelee) {
+                    gameState.setActionMode(ActionMode.melee);
+                    Navigator.of(context).pop();
+                  } else {
+                    gameState.battleLog.add(
+                      'No hay enemigos a 1" o menos para combatir.',
+                    );
+                    gameState.notifyListeners();
                     Navigator.of(context).pop();
                   }
                 },
@@ -342,12 +373,10 @@ class _GameBoardState extends State<GameBoard> {
                         inMoveRange: gameState.moveRange.contains(
                           Offset(col.toDouble(), row.toDouble()),
                         ),
-
                         inAttackRange: gameState.attackRange.contains(
                           Offset(col.toDouble(), row.toDouble()),
                         ),
                         inChargeRange: gameState.chargeRange.contains(
-                          // Reusamos attackRange para carga
                           Offset(col.toDouble(), row.toDouble()),
                         ),
                         hasActed: gameState.actedUnits.contains(
@@ -355,8 +384,7 @@ class _GameBoardState extends State<GameBoard> {
                         ),
                         onTap: _onTileTapped,
                         board: gameState.board,
-                        actionMode:
-                            gameState.actionMode, // Añadir este parámetro
+                        actionMode: gameState.actionMode,
                       );
                     },
                   ),

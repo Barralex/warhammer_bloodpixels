@@ -5,6 +5,7 @@ class RadialMenu extends StatelessWidget {
   final Function() onAttackSelected;
   final Function() onEndTurnSelected;
   final Function() onChargeSelected;
+  final Function() onMeleeSelected;
 
   const RadialMenu({
     Key? key,
@@ -12,18 +13,33 @@ class RadialMenu extends StatelessWidget {
     required this.onAttackSelected,
     required this.onEndTurnSelected,
     required this.onChargeSelected,
+    required this.onMeleeSelected,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 120,
-      height: 120,
+      width: 160, // Más grande
+      height: 160, // Más grande
       child: Stack(
         children: [
+          // Centro
+          Positioned(
+            left: 60,
+            top: 60,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.black26,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          // Mover (arriba)
           Positioned(
             top: 0,
-            left: 40,
+            left: 60,
             child: _buildButton(
               icon: Icons.directions_walk,
               color: Colors.blue,
@@ -31,9 +47,10 @@ class RadialMenu extends StatelessWidget {
               tooltip: 'Mover',
             ),
           ),
+          // Cancelar (abajo)
           Positioned(
             bottom: 0,
-            left: 40,
+            left: 60,
             child: _buildButton(
               icon: Icons.close,
               color: Colors.grey,
@@ -41,8 +58,9 @@ class RadialMenu extends StatelessWidget {
               tooltip: 'Cancelar',
             ),
           ),
+          // Atacar (izquierda)
           Positioned(
-            top: 40,
+            top: 60,
             left: 0,
             child: _buildButton(
               icon: Icons.gps_fixed,
@@ -51,14 +69,26 @@ class RadialMenu extends StatelessWidget {
               tooltip: 'Atacar',
             ),
           ),
+          // Cargar (abajo derecha)
           Positioned(
-            bottom: 40,
-            right: 0,
+            bottom: 15,
+            right: 15,
             child: _buildButton(
               icon: Icons.sports_martial_arts,
               color: Colors.green,
               onTap: onChargeSelected,
               tooltip: 'Cargar',
+            ),
+          ),
+          // Combate (derecha)
+          Positioned(
+            top: 60,
+            right: 0,
+            child: _buildButton(
+              icon: Icons.sports_kabaddi,
+              color: Colors.orange,
+              onTap: onMeleeSelected,
+              tooltip: 'Combate',
             ),
           ),
         ],
