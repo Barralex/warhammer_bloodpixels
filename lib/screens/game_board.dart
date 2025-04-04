@@ -74,7 +74,6 @@ class _GameBoardState extends State<GameBoard> {
 
     // Si ya estamos en modo carga y clicamos un enemigo válido
     if (gameState.actionMode == ActionMode.charge &&
-        gameState.attackRange.contains(tappedOffset) &&
         unit?.type != gameState.currentTurn) {
       await gameState.attemptCharge(row, col, context);
       gameState.setActionMode(ActionMode.none);

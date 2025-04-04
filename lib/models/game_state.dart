@@ -134,44 +134,41 @@ class GameState extends ChangeNotifier {
     int selectedRow = selectedTile!.dy.toInt();
     int selectedCol = selectedTile!.dx.toInt();
     Unit attacker = board[selectedRow][selectedCol]!;
+    Unit? target = board[targetRow][targetCol];
+
+    // Verificar que hay un enemigo para cargar
+    if (target == null || target.type == attacker.type) return;
 
     double distance = sqrt(
       pow(targetRow - selectedRow, 2) + pow(targetCol - selectedCol, 2),
     );
 
-    if (attacker.type == 'tyranid' &&
-        attacker.attackRange == 1 &&
-        distance <= 12) {
+    // Permitir cargas a unidades adyacentes
+    if (distance <= 12 && distance > 1) {
       int chargeRoll = await _simulateRoll2D6(
         context,
         distance: distance.round(),
       );
 
+      battleLog.add('Distancia de carga: $distance, Tirada: $chargeRoll');
+
       if (chargeRoll >= distance) {
         _performAttack(selectedRow, selectedCol, targetRow, targetCol, context);
 
-        Offset finalOffset = Offset(
-          selectedCol.toDouble(),
-          selectedRow.toDouble(),
+        // Mover unidad atacante cerca del objetivo
+        Offset finalOffset = _findAdjacentSpot(
+          selectedRow,
+          selectedCol,
+          targetRow,
+          targetCol,
+          attacker,
         );
 
-        if (board[targetRow][targetCol] == null) {
-          board[targetRow][targetCol] = attacker;
-          board[selectedRow][selectedCol] = null;
-          finalOffset = Offset(targetCol.toDouble(), targetRow.toDouble());
-        } else {
-          finalOffset = _findAdjacentSpot(
-            selectedRow,
-            selectedCol,
-            targetRow,
-            targetCol,
-            attacker,
-          );
-        }
-
         actedUnits.add(finalOffset);
+        battleLog.add('¡Carga exitosa!');
       } else {
         actedUnits.add(Offset(selectedCol.toDouble(), selectedRow.toDouble()));
+        battleLog.add('Carga fallida');
       }
 
       clearSelection();
