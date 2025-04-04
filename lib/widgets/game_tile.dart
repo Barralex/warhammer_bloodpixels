@@ -9,6 +9,7 @@ class GameTile extends StatelessWidget {
   final bool isSelected;
   final bool inMoveRange;
   final bool inAttackRange;
+  final bool inChargeRange;
   final bool hasActed;
   final List<List<Unit?>> board;
   final Function(int, int) onTap;
@@ -22,6 +23,7 @@ class GameTile extends StatelessWidget {
     required this.isSelected,
     required this.inMoveRange,
     required this.inAttackRange,
+    required this.inChargeRange,
     required this.hasActed,
     required this.board,
     required this.onTap,
@@ -73,6 +75,17 @@ class GameTile extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                ),
+              ),
+
+            // Green highlight para modo carga
+            if (inChargeRange && actionMode == ActionMode.charge)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(50),
                   ),
                 ),

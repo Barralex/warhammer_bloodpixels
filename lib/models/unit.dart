@@ -4,6 +4,7 @@ class Unit {
   final int maxHp;
   final int movement;
   final int attackRange;
+  final int chargeRange; // Nueva propiedad
   final int damage;
   final int weaponBS; // Ballistic Skill
 
@@ -15,6 +16,7 @@ class Unit {
           type == 'space_marine'
               ? 3
               : 6, // Tyranids ahora también tienen alcance
+      chargeRange = 12, // 12" para ambos tipos según las reglas
       damage = type == 'space_marine' ? 3 : 2,
       weaponBS = type == 'space_marine' ? 3 : 4; // Marines 3+, Tiránidos 4+
 }

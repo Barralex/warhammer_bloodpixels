@@ -10,6 +10,7 @@ class GameState extends ChangeNotifier {
   int turnNumber = 1;
   List<List<Unit?>> board = List.generate(10, (index) => List.filled(14, null));
   Offset? selectedTile;
+  List<Offset> chargeRange = [];
   String currentTurn = 'space_marine';
   List<Offset> moveRange = [];
   List<Offset> attackRange = [];
@@ -23,7 +24,6 @@ class GameState extends ChangeNotifier {
   void setActionMode(ActionMode mode) {
     actionMode = mode;
 
-    // Solo calcular rangos cuando se elija un modo
     if (selectedTile != null) {
       int row = selectedTile!.dy.toInt();
       int col = selectedTile!.dx.toInt();
@@ -31,14 +31,20 @@ class GameState extends ChangeNotifier {
 
       if (mode == ActionMode.move) {
         moveRange = _calculateMoveRange(row, col, unit);
-        attackRange = []; // Limpiar el otro rango
+        attackRange = [];
+        chargeRange = []; // Limpiar el rango de carga
       } else if (mode == ActionMode.attack) {
         attackRange = _calculateAttackRange(row, col, unit);
-        moveRange = []; // Limpiar el otro rango
-      } else {
-        // Limpiar ambos rangos si se cancela
+        moveRange = [];
+        chargeRange = []; // Limpiar el rango de carga
+      } else if (mode == ActionMode.charge) {
+        chargeRange = _calculateChargeRange(row, col, unit);
         moveRange = [];
         attackRange = [];
+      } else {
+        moveRange = [];
+        attackRange = [];
+        chargeRange = [];
       }
     }
 
@@ -53,6 +59,25 @@ class GameState extends ChangeNotifier {
     for (int i = 0; i < 3; i++) {
       board[9][i] = Unit("space_marine");
     }
+  }
+
+  List<Offset> _calculateChargeRange(int row, int col, Unit unit) {
+    List<Offset> result = [];
+    for (int r = 0; r < 10; r++) {
+      for (int c = 0; c < 14; c++) {
+        // Solo incluir casillas con enemigos
+        if (board[r][c] != null &&
+            board[r][c]!.type != unit.type &&
+            board[r][c]!.hp > 0) {
+          double distance = sqrt(pow(r - row, 2) + pow(c - col, 2));
+          // Dentro del rango de carga (12") pero no adyacente
+          if (distance <= 12 && distance > 1) {
+            result.add(Offset(c.toDouble(), r.toDouble()));
+          }
+        }
+      }
+    }
+    return result;
   }
 
   void selectTile(int row, int col) {

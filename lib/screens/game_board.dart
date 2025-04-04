@@ -358,7 +358,12 @@ class _GameBoardState extends State<GameBoard> {
                         inMoveRange: gameState.moveRange.contains(
                           Offset(col.toDouble(), row.toDouble()),
                         ),
+
                         inAttackRange: gameState.attackRange.contains(
+                          Offset(col.toDouble(), row.toDouble()),
+                        ),
+                        inChargeRange: gameState.attackRange.contains(
+                          // Reusamos attackRange para carga
                           Offset(col.toDouble(), row.toDouble()),
                         ),
                         hasActed: gameState.actedUnits.contains(
