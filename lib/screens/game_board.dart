@@ -5,7 +5,7 @@ import '../models/unit.dart';
 import '../widgets/game_tile.dart';
 import '../widgets/dice_roller.dart';
 import '../widgets/battle_log_panel.dart';
-import '../widgets/radial_menu.dart';
+import '../widgets/unit_action_panel.dart';
 
 class GameBoard extends StatefulWidget {
   @override
@@ -14,6 +14,7 @@ class GameBoard extends StatefulWidget {
 
 class _GameBoardState extends State<GameBoard> {
   late GameState gameState;
+  OverlayEntry? _currentMenuOverlay;
 
   @override
   void initState() {
@@ -59,6 +60,10 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   void _onTileTapped(int row, int col) async {
+    // Cerrar cualquier menú abierto al tocar en cualquier lugar
+    _currentMenuOverlay?.remove();
+    _currentMenuOverlay = null;
+
     Unit? unit = gameState.board[row][col];
     Offset tappedOffset = Offset(col.toDouble(), row.toDouble());
 
@@ -114,93 +119,140 @@ class _GameBoardState extends State<GameBoard> {
     if (unit?.type == gameState.currentTurn &&
         !gameState.actedUnits.contains(tappedOffset)) {
       gameState.selectTile(row, col);
-      // Mostrar menú radial
-      _showRadialMenu(context, row, col);
+      // Mostrar menú de acciones
+      _showUnitActionPanel(context, row, col);
     } else {
       // Si clicamos en cualquier otra parte, limpiamos selección
       gameState.clearSelection();
     }
   }
 
-  void _showRadialMenu(BuildContext context, int row, int col) {
+  // Solo reemplaza la función _showUnitActionPanel en tu game_board.dart:
+  void _showUnitActionPanel(BuildContext context, int row, int col) {
+    // Remover cualquier menú existente
+    _currentMenuOverlay?.remove();
+
+    if (gameState.selectedTile == null) return;
+
     final selectedRow = gameState.selectedTile!.dy.toInt();
     final selectedCol = gameState.selectedTile!.dx.toInt();
     final selectedUnit = gameState.board[selectedRow][selectedCol]!;
 
-    // Comprobar si la unidad está trabada en combate
-    bool isLockedInCombat = _isEngaged(selectedRow, selectedCol);
-    bool canMelee = isLockedInCombat;
+    // Verificar si la unidad está trabada en combate
+    bool isEngaged = _isEngaged(selectedRow, selectedCol);
 
-    // Calcular posición en pantalla para el menú
+    // Obtener la posición global del tile seleccionado
     final RenderBox box = context.findRenderObject() as RenderBox;
     final Offset position = box.localToGlobal(Offset.zero);
-    final cellWidth = box.size.width / 14;
-    final cellHeight = box.size.height / 10;
+    final double cellWidth = box.size.width / 14;
+    final double cellHeight = box.size.height / 10;
 
-    final double menuSize = 150;
-    final menuX = ((col * cellWidth) + position.dx + (cellWidth / 2)).clamp(
-      position.dx + menuSize / 2,
-      position.dx + box.size.width - menuSize / 2,
-    );
-    final menuY = ((row * cellHeight) + position.dy + (cellHeight / 2)).clamp(
-      position.dy + menuSize / 2,
-      position.dy + box.size.height - menuSize / 2,
-    );
+    // Calcular las coordenadas del tablero
+    final double boardLeft = position.dx;
+    final double boardRight = position.dx + box.size.width;
+    final double boardTop = position.dy;
+    final double boardBottom = position.dy + box.size.height;
 
-    showDialog(
-      context: context,
-      barrierColor: Colors.transparent,
-      builder: (context) {
-        return Stack(
-          children: [
-            Positioned(
-              left: menuX - 75,
-              top: menuY - 75,
-              child: RadialMenu(
+    // Ancho del panel
+    const double panelWidth = 40;
+
+    // Intentar colocar el menú a la derecha del tile seleccionado
+    double panelX = ((selectedCol + 1) * cellWidth) + position.dx;
+
+    // Si se sale por la derecha, intentar a la izquierda
+    if (panelX + panelWidth > boardRight) {
+      panelX = (selectedCol * cellWidth) - panelWidth + position.dx;
+    }
+
+    // Si también se sale por la izquierda, colocar sobre la unidad
+    if (panelX < boardLeft) {
+      panelX = (selectedCol * cellWidth) + position.dx;
+    }
+
+    // Calcular altura aproximada del panel
+    const double buttonHeight = 40;
+    const double buttonCount = 5; // Mover, Disparar, Cargar, Combate, Cancelar
+    const double panelHeight = buttonHeight * buttonCount;
+
+    // Posición vertical: intentar centrar con la unidad
+    double panelY =
+        (selectedRow * cellHeight) +
+        (cellHeight / 2) -
+        (panelHeight / 2) +
+        position.dy;
+
+    // Si se sale por arriba
+    if (panelY < boardTop) {
+      panelY = boardTop;
+    }
+
+    // Si se sale por abajo
+    if (panelY + panelHeight > boardBottom) {
+      panelY = boardBottom - panelHeight;
+    }
+
+    // Mostrar el panel como overlay
+    OverlayState? overlay = Overlay.of(context);
+
+    _currentMenuOverlay = OverlayEntry(
+      builder:
+          (context) => Positioned(
+            left: panelX,
+            top: panelY,
+            child: Material(
+              color: Colors.transparent,
+              child: UnitActionPanel(
+                selectedUnit: selectedUnit,
+                isEngaged: isEngaged,
                 onMoveSelected: () {
-                  if (!isLockedInCombat) {
+                  if (!isEngaged) {
                     gameState.setActionMode(ActionMode.move);
-                    Navigator.of(context).pop();
+                    _currentMenuOverlay?.remove();
+                    _currentMenuOverlay = null;
                   } else {
                     gameState.battleLog.add(
                       'Unidad trabada en combate. No puede moverse.',
                     );
                     gameState.notifyListeners();
-                    Navigator.of(context).pop();
+                    _currentMenuOverlay?.remove();
+                    _currentMenuOverlay = null;
                   }
                 },
                 onAttackSelected: () {
                   gameState.setActionMode(ActionMode.attack);
-                  Navigator.of(context).pop();
+                  _currentMenuOverlay?.remove();
+                  _currentMenuOverlay = null;
                 },
                 onChargeSelected: () {
-                  if (selectedUnit.type == gameState.currentTurn) {
-                    gameState.setActionMode(ActionMode.charge);
-                    Navigator.of(context).pop();
-                  }
+                  gameState.setActionMode(ActionMode.charge);
+                  _currentMenuOverlay?.remove();
+                  _currentMenuOverlay = null;
                 },
                 onMeleeSelected: () {
-                  if (canMelee) {
+                  if (isEngaged) {
                     gameState.setActionMode(ActionMode.melee);
-                    Navigator.of(context).pop();
+                    _currentMenuOverlay?.remove();
+                    _currentMenuOverlay = null;
                   } else {
                     gameState.battleLog.add(
                       'No hay enemigos a 1" o menos para combatir.',
                     );
                     gameState.notifyListeners();
-                    Navigator.of(context).pop();
+                    _currentMenuOverlay?.remove();
+                    _currentMenuOverlay = null;
                   }
                 },
-                onEndTurnSelected: () {
+                onCancelSelected: () {
                   gameState.clearSelection();
-                  Navigator.of(context).pop();
+                  _currentMenuOverlay?.remove();
+                  _currentMenuOverlay = null;
                 },
               ),
             ),
-          ],
-        );
-      },
+          ),
     );
+
+    overlay.insert(_currentMenuOverlay!);
   }
 
   bool _isEngaged(int row, int col) {
@@ -398,7 +450,12 @@ class _GameBoardState extends State<GameBoard> {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 12, right: 12),
         child: ElevatedButton.icon(
-          onPressed: () => gameState.endTurn(),
+          onPressed: () {
+            // Cerrar cualquier menú abierto al finalizar turno
+            _currentMenuOverlay?.remove();
+            _currentMenuOverlay = null;
+            gameState.endTurn();
+          },
           icon: const Icon(Icons.shield_moon, size: 20),
           label: const Text(
             'Finalizar Turno',
@@ -426,6 +483,7 @@ class _GameBoardState extends State<GameBoard> {
 
   @override
   void dispose() {
+    _currentMenuOverlay?.remove();
     gameState.dispose();
     super.dispose();
   }
