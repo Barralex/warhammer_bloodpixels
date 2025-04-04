@@ -6,6 +6,7 @@ class UnitConfig {
   final int chargeRange;
   final int damage;
   final int weaponBS;
+  final String faction;
 
   const UnitConfig({
     required this.hp,
@@ -15,6 +16,7 @@ class UnitConfig {
     required this.chargeRange,
     required this.damage,
     required this.weaponBS,
+    required this.faction,
   });
 }
 
@@ -27,6 +29,7 @@ class Unit {
   final int chargeRange;
   final int damage;
   final int weaponBS;
+  final String faction;
 
   static const Map<String, UnitConfig> unitConfigs = {
     'space_marine': UnitConfig(
@@ -37,6 +40,7 @@ class Unit {
       chargeRange: 12,
       damage: 3,
       weaponBS: 3,
+      faction: 'space_marine',
     ),
     'tyranid': UnitConfig(
       hp: 5,
@@ -46,6 +50,17 @@ class Unit {
       chargeRange: 12,
       damage: 2,
       weaponBS: 4,
+      faction: 'tyranid',
+    ),
+    'reaper_swarm': UnitConfig(
+      hp: 1,
+      maxHp: 1,
+      movement: 6,
+      attackRange: 0,
+      chargeRange: 12,
+      damage: 1,
+      weaponBS: 4,
+      faction: 'tyranid',
     ),
   };
 
@@ -57,5 +72,6 @@ class Unit {
       attackRange = unitConfigs[type]!.attackRange,
       chargeRange = unitConfigs[type]!.chargeRange,
       damage = unitConfigs[type]!.damage,
-      weaponBS = unitConfigs[type]!.weaponBS;
+      weaponBS = unitConfigs[type]!.weaponBS,
+      faction = unitConfigs[type]!.faction;
 }

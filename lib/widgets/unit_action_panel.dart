@@ -53,13 +53,13 @@ class UnitActionPanel extends StatelessWidget {
             icon: Icons.gps_fixed,
             color: const Color(0xFF600000),
             onTap: onAttackSelected,
-            enabled: true,
+            enabled: !isEngaged,
           ),
           _buildActionButton(
             icon: Icons.sports_martial_arts,
             color: const Color(0xFF143400),
             onTap: onChargeSelected,
-            enabled: true,
+            enabled: !isEngaged,
           ),
           _buildActionButton(
             icon: Icons.sports_kabaddi,

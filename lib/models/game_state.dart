@@ -59,6 +59,7 @@ class GameState extends ChangeNotifier {
     for (int i = 0; i < 5; i++) {
       board[0][i] = Unit("tyranid");
     }
+    board[0][5] = Unit("reaper_swarm");
     for (int i = 0; i < 3; i++) {
       board[9][i] = Unit("space_marine");
     }
@@ -475,8 +476,8 @@ class GameState extends ChangeNotifier {
   }
 
   bool _isEngaged(int row, int col) {
-    final type = board[row][col]?.type;
-    if (type == null) return false;
+    final unit = board[row][col];
+    if (unit == null) return false;
 
     for (int i = -1; i <= 1; i++) {
       for (int j = -1; j <= 1; j++) {
@@ -486,10 +487,11 @@ class GameState extends ChangeNotifier {
         if (newRow >= 0 &&
             newRow < 10 &&
             newCol >= 0 &&
-            newCol < 14 &&
-            board[newRow][newCol]?.type != null &&
-            board[newRow][newCol]!.type != type) {
-          return true;
+            newCol < 14) {
+          final neighbor = board[newRow][newCol];
+          if (neighbor != null && neighbor.faction != unit.faction) {
+            return true;
+          }
         }
       }
     }
@@ -502,8 +504,8 @@ class GameState extends ChangeNotifier {
     int targetRow,
     int targetCol,
   ) {
-    final attackerType = board[attackerRow][attackerCol]?.type;
-    if (attackerType == null) return false;
+    final attacker = board[attackerRow][attackerCol];
+    if (attacker == null) return false;
 
     for (int i = -1; i <= 1; i++) {
       for (int j = -1; j <= 1; j++) {
@@ -514,10 +516,11 @@ class GameState extends ChangeNotifier {
             newRow < 10 &&
             newCol >= 0 &&
             newCol < 14 &&
-            !(newRow == targetRow && newCol == targetCol) &&
-            board[newRow][newCol]?.type != null &&
-            board[newRow][newCol]!.type != attackerType) {
-          return true;
+            !(newRow == targetRow && newCol == targetCol)) {
+          final neighbor = board[newRow][newCol];
+          if (neighbor != null && neighbor.faction != attacker.faction) {
+            return true;
+          }
         }
       }
     }
