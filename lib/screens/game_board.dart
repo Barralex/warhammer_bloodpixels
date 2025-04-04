@@ -6,6 +6,7 @@ import '../widgets/game_tile.dart';
 import '../widgets/battle_log_panel.dart';
 import '../widgets/unit_action_panel.dart';
 import '../constants/game_constants.dart';
+import '../widgets/unit_info_panel.dart';
 
 class GameBoard extends StatefulWidget {
   @override
@@ -419,38 +420,55 @@ class _GameBoardState extends State<GameBoard> {
               ),
             ),
           ),
-          BattleLogPanel(logLines: gameState.battleLog),
+          Column(
+            children: [
+              Container(
+                width: GameConstants.BATTLE_LOG_PANEL_WIDTH,
+                padding: const EdgeInsets.all(12),
+                color: const Color(0xFF1E1E1E),
+                child: Column(
+                  children: [
+                    const Text(
+                      'Registro de Batalla',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        _currentMenuOverlay?.remove();
+                        _currentMenuOverlay = null;
+                        gameState.endTurn();
+                      },
+                      icon: const Icon(Icons.shield_moon, size: 20),
+                      label: const Text('Finalizar Turno'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2C2C2C),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              UnitInfoPanel(
+                selectedUnit:
+                    gameState.selectedTile != null
+                        ? gameState.board[gameState.selectedTile!.dy
+                            .toInt()][gameState.selectedTile!.dx.toInt()]
+                        : null,
+              ),
+              Expanded(child: BattleLogPanel(logLines: gameState.battleLog)),
+            ],
+          ),
         ],
-      ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 12, right: 12),
-        child: ElevatedButton.icon(
-          onPressed: () {
-            _currentMenuOverlay?.remove();
-            _currentMenuOverlay = null;
-            gameState.endTurn();
-          },
-          icon: const Icon(Icons.shield_moon, size: 20),
-          label: const Text(
-            'Finalizar Turno',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-              fontSize: 14,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2C2C2C),
-            foregroundColor: Colors.white,
-            elevation: 10,
-            shadowColor: Colors.black,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Color(0xFF555555), width: 2),
-            ),
-          ),
-        ),
       ),
     );
   }
