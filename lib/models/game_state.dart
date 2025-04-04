@@ -32,11 +32,11 @@ class GameState extends ChangeNotifier {
       if (mode == ActionMode.move) {
         moveRange = _calculateMoveRange(row, col, unit);
         attackRange = [];
-        chargeRange = []; // Limpiar el rango de carga
+        chargeRange = [];
       } else if (mode == ActionMode.attack) {
         attackRange = _calculateAttackRange(row, col, unit);
         moveRange = [];
-        chargeRange = []; // Limpiar el rango de carga
+        chargeRange = [];
       } else if (mode == ActionMode.charge) {
         chargeRange = _calculateChargeRange(row, col, unit);
         moveRange = [];
@@ -65,15 +65,10 @@ class GameState extends ChangeNotifier {
     List<Offset> result = [];
     for (int r = 0; r < 10; r++) {
       for (int c = 0; c < 14; c++) {
-        // Solo incluir casillas con enemigos
-        if (board[r][c] != null &&
-            board[r][c]!.type != unit.type &&
-            board[r][c]!.hp > 0) {
-          double distance = sqrt(pow(r - row, 2) + pow(c - col, 2));
-          // Dentro del rango de carga (12") pero no adyacente
-          if (distance <= 12 && distance > 1) {
-            result.add(Offset(c.toDouble(), r.toDouble()));
-          }
+        double distance = sqrt(pow(r - row, 2) + pow(c - col, 2));
+        // Dentro del rango de carga (12")
+        if (distance <= 12 && distance > 1) {
+          result.add(Offset(c.toDouble(), r.toDouble()));
         }
       }
     }

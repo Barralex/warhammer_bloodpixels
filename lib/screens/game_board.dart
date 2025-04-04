@@ -156,22 +156,6 @@ class _GameBoardState extends State<GameBoard> {
                 },
                 onChargeSelected: () {
                   if (selectedUnit.type == gameState.currentTurn) {
-                    final selectedRow = gameState.selectedTile!.dy.toInt();
-                    final selectedCol = gameState.selectedTile!.dx.toInt();
-
-                    final range = <Offset>{};
-                    for (int r = 0; r < 10; r++) {
-                      for (int c = 0; c < 14; c++) {
-                        final distance = sqrt(
-                          pow(r - selectedRow, 2) + pow(c - selectedCol, 2),
-                        );
-                        if (distance <= 12) {
-                          range.add(Offset(c.toDouble(), r.toDouble()));
-                        }
-                      }
-                    }
-
-                    gameState.chargeRange = range.toList();
                     gameState.setActionMode(ActionMode.charge);
                     Navigator.of(context).pop();
                   }
