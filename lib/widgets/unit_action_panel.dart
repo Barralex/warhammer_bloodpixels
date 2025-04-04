@@ -23,7 +23,7 @@ class UnitActionPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isSpaceMarine = selectedUnit.type == 'space_marine';
+    final bool isSpaceMarine = selectedUnit.faction == 'space_marine';
     final Color mainColor =
         isSpaceMarine ? const Color(0xFF0B1E36) : const Color(0xFF3A0D0D);
 

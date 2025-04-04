@@ -75,7 +75,7 @@ class _GameBoardState extends State<GameBoard> {
     }
 
     if (gameState.actionMode == ActionMode.charge &&
-        unit?.type != gameState.currentTurn) {
+        unit?.faction != gameState.currentTurn) {
       await gameState.attemptCharge(row, col, context);
       gameState.setActionMode(ActionMode.none);
       _checkVictoryCondition(context);
@@ -84,7 +84,7 @@ class _GameBoardState extends State<GameBoard> {
 
     if (gameState.actionMode == ActionMode.attack &&
         gameState.attackRange.contains(tappedOffset) &&
-        unit?.type != gameState.currentTurn) {
+        unit?.faction != gameState.currentTurn) {
       gameState.attack(row, col, context);
       gameState.setActionMode(ActionMode.none);
       _checkVictoryCondition(context);
@@ -92,7 +92,7 @@ class _GameBoardState extends State<GameBoard> {
     }
 
     if (gameState.actionMode == ActionMode.melee &&
-        unit?.type != gameState.currentTurn) {
+        unit?.faction != gameState.currentTurn) {
       double distance = _calculateDistance(
         gameState.selectedTile!.dy.toInt(),
         gameState.selectedTile!.dx.toInt(),
@@ -108,7 +108,7 @@ class _GameBoardState extends State<GameBoard> {
       }
     }
 
-    if (unit?.type == gameState.currentTurn &&
+    if (unit?.faction == gameState.currentTurn &&
         !gameState.actedUnits.contains(tappedOffset)) {
       gameState.selectTile(row, col);
       _showUnitActionPanel(context, row, col);

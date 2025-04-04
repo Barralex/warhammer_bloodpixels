@@ -83,13 +83,12 @@ class GameState extends ChangeNotifier {
     Offset tappedOffset = Offset(col.toDouble(), row.toDouble());
     Unit? unit = board[row][col];
 
-    if (unit?.type == currentTurn && actedUnits.contains(tappedOffset)) {
+    if (unit?.faction == currentTurn && actedUnits.contains(tappedOffset)) {
       return;
     }
 
-    if (unit?.type == currentTurn) {
+    if (unit?.faction == currentTurn) {
       selectedTile = Offset(col.toDouble(), row.toDouble());
-      // No calculamos rangos aquí - esperamos a que el usuario seleccione una acción
       moveRange = [];
       attackRange = [];
       notifyListeners();
@@ -161,7 +160,7 @@ class GameState extends ChangeNotifier {
     Unit? target = board[targetRow][targetCol];
 
     // Verificar que hay un enemigo para cargar
-    if (target == null || target.type == attacker.type) return;
+    if (target == null || target.faction == attacker.faction) return;
 
     double distance = sqrt(
       pow(targetRow - selectedRow, 2) + pow(targetCol - selectedCol, 2),
@@ -253,14 +252,14 @@ class GameState extends ChangeNotifier {
       // Usamos 1.5 para capturar casillas diagonales
       // Número de ataques según el tipo de unidad
       int numAttacks =
-          attacker.type == 'space_marine'
+          attacker.faction == 'space_marine'
               ? 2
-              : (attacker.type == 'tyranid')
+              : (attacker.faction == 'tyranid')
               ? 1
               : 1;
 
       battleLog.add(
-        '${attacker.type == 'space_marine' ? 'Marine' : 'Tiranido'} realiza $numAttacks ataques cuerpo a cuerpo',
+        '${attacker.faction == 'space_marine' ? 'Marine' : 'Tiranido'} realiza $numAttacks ataques cuerpo a cuerpo',
       );
 
       int successfulHits = 0;
@@ -272,7 +271,7 @@ class GameState extends ChangeNotifier {
         hitRolls.add(hitRoll);
 
         // En combate cuerpo a cuerpo, impacta con 3+ para marines y 4+ para tiránidos
-        int hitTarget = attacker.type == 'space_marine' ? 3 : 4;
+        int hitTarget = attacker.faction == 'space_marine' ? 3 : 4;
         if (hitRoll >= hitTarget) {
           successfulHits++;
         }
@@ -290,7 +289,7 @@ class GameState extends ChangeNotifier {
           saveRolls.add(saveRoll);
 
           // Salva en 5+ para tiránidos, 3+ para marines
-          int saveTarget = target.type == 'space_marine' ? 3 : 5;
+          int saveTarget = target.faction == 'space_marine' ? 3 : 5;
           if (saveRoll >= saveTarget) {
             savedWounds++;
           }
@@ -307,9 +306,9 @@ class GameState extends ChangeNotifier {
 
         // Registra el ataque
         String attackerType =
-            attacker.type == 'space_marine' ? 'Marine' : 'Tiranido';
+            attacker.faction == 'space_marine' ? 'Marine' : 'Tiranido';
         String targetType =
-            target.type == 'space_marine' ? 'Marine' : 'Tiranido';
+            target.faction == 'space_marine' ? 'Marine' : 'Tiranido';
 
         battleLog.add(
           '$attackerType causa $woundsToApply heridas a $targetType en combate cuerpo a cuerpo',
@@ -340,7 +339,7 @@ class GameState extends ChangeNotifier {
     Unit target = board[targetRow][targetCol]!;
 
     // Número de ataques (2 para marines con bólter)
-    int numAttacks = attacker.type == 'space_marine' ? 2 : 1;
+    int numAttacks = attacker.faction == 'space_marine' ? 2 : 1;
     int successfulHits = 0;
 
     List<int> hitRolls = [];
@@ -368,9 +367,9 @@ class GameState extends ChangeNotifier {
         saveRolls.add(saveRoll);
 
         // Salva en 5+ para tiránidos, 3+ para marines
-        int saveTarget = target.type == 'space_marine' ? 3 : 5;
+        int saveTarget = target.faction == 'space_marine' ? 3 : 5;
         battleLog.add(
-          'Objetivo (${target.type}) necesita $saveTarget+ para salvar',
+          'Objetivo (${target.faction}) necesita $saveTarget+ para salvar',
         );
         if (saveRoll >= saveTarget) {
           savedWounds++;
@@ -388,8 +387,9 @@ class GameState extends ChangeNotifier {
 
       // Registra el ataque
       String attackerType =
-          attacker.type == 'space_marine' ? 'Marine' : 'Tiranido';
-      String targetType = target.type == 'space_marine' ? 'Marine' : 'Tiranido';
+          attacker.faction == 'space_marine' ? 'Marine' : 'Tiranido';
+      String targetType =
+          target.faction == 'space_marine' ? 'Marine' : 'Tiranido';
 
       battleLog.add('$attackerType causa $woundsToApply heridas a $targetType');
 
