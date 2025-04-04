@@ -30,6 +30,19 @@ class GameTile extends StatelessWidget {
     required this.actionMode,
   }) : super(key: key);
 
+  String getAssetPath(String unitType) {
+    switch (unitType) {
+      case 'tyranid':
+        return 'assets/tyranids/default.png';
+      case 'reaper_swarm':
+        return 'assets/reaper_swarm.png';
+      case 'space_marine':
+        return 'assets/space_marine.png';
+      default:
+        return 'assets/$unitType.png';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -102,9 +115,7 @@ class GameTile extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: Image.asset('assets/${unit!.type}.png'),
-                        ),
+                        Expanded(child: Image.asset(getAssetPath(unit!.type))),
                         const SizedBox(height: 2),
                         _buildHealthBar(unit!),
                       ],
