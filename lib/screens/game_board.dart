@@ -5,6 +5,7 @@ import '../models/unit.dart';
 import '../widgets/game_tile.dart';
 import '../widgets/battle_log_panel.dart';
 import '../widgets/unit_action_panel.dart';
+import '../constants/game_constants.dart';
 
 class GameBoard extends StatefulWidget {
   @override
@@ -100,7 +101,7 @@ class _GameBoardState extends State<GameBoard> {
         col,
       );
 
-      if (distance <= 1.5) {
+      if (distance <= GameConstants.ENGAGEMENT_RANGE) {
         gameState.performMeleeAttack(row, col, context);
         gameState.setActionMode(ActionMode.none);
         _checkVictoryCondition(context);
@@ -130,8 +131,8 @@ class _GameBoardState extends State<GameBoard> {
 
     final RenderBox box = context.findRenderObject() as RenderBox;
     final Offset position = box.localToGlobal(Offset.zero);
-    final double cellWidth = box.size.width / 14;
-    final double cellHeight = box.size.height / 10;
+    final double cellWidth = box.size.width / GameConstants.BOARD_COLS;
+    final double cellHeight = box.size.height / GameConstants.BOARD_ROWS;
 
     final double boardLeft = position.dx;
     final double boardRight = position.dx + box.size.width;
@@ -247,9 +248,9 @@ class _GameBoardState extends State<GameBoard> {
       final newCol = col + offset.dx.toInt();
 
       if (newRow >= 0 &&
-          newRow < 10 &&
+          newRow < GameConstants.BOARD_ROWS &&
           newCol >= 0 &&
-          newCol < 14 &&
+          newCol < GameConstants.BOARD_COLS &&
           gameState.board[newRow][newCol] != null &&
           gameState.board[newRow][newCol]!.faction !=
               gameState.board[row][col]!.faction &&
@@ -302,9 +303,9 @@ class _GameBoardState extends State<GameBoard> {
         int newCol = targetCol + dir[1];
 
         if (newRow >= 0 &&
-            newRow < 10 &&
+            newRow < GameConstants.BOARD_ROWS &&
             newCol >= 0 &&
-            newCol < 14 &&
+            newCol < GameConstants.BOARD_COLS &&
             gameState.board[newRow][newCol] == null) {
           gameState.board[newRow][newCol] = attacker;
           gameState.board[selectedRow][selectedCol] = null;
@@ -374,17 +375,18 @@ class _GameBoardState extends State<GameBoard> {
               color: const Color(0xFFF5F5DC),
               child: Center(
                 child: AspectRatio(
-                  aspectRatio: 14 / 10,
+                  aspectRatio:
+                      GameConstants.BOARD_COLS / GameConstants.BOARD_ROWS,
                   child: GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 14,
-                          childAspectRatio: 1,
-                        ),
-                    itemCount: 140,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: GameConstants.BOARD_COLS,
+                      childAspectRatio: 1,
+                    ),
+                    itemCount:
+                        GameConstants.BOARD_ROWS * GameConstants.BOARD_COLS,
                     itemBuilder: (context, index) {
-                      int row = index ~/ 14;
-                      int col = index % 14;
+                      int row = index ~/ GameConstants.BOARD_COLS;
+                      int col = index % GameConstants.BOARD_COLS;
                       Unit? unit = gameState.board[row][col];
                       bool isSelected =
                           gameState.selectedTile?.dx == col &&

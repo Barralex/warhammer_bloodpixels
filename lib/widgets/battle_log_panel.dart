@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/game_constants.dart';
 
 class BattleLogPanel extends StatelessWidget {
   final List<String> logLines;
@@ -8,7 +9,7 @@ class BattleLogPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 280,
+      width: GameConstants.BATTLE_LOG_PANEL_WIDTH,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),

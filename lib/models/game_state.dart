@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'unit.dart';
+import '../constants/game_constants.dart';
 
 enum ActionMode { none, move, attack, charge, melee }
 
 class GameState extends ChangeNotifier {
   ActionMode actionMode = ActionMode.none;
   int turnNumber = 1;
-  List<List<Unit?>> board = List.generate(10, (index) => List.filled(14, null));
+  List<List<Unit?>> board = List.generate(
+    GameConstants.BOARD_ROWS,
+    (index) => List.filled(GameConstants.BOARD_COLS, null),
+  );
   Offset? selectedTile;
   List<Offset> chargeRange = [];
   String currentTurn = 'space_marine';
@@ -61,17 +65,17 @@ class GameState extends ChangeNotifier {
     }
     board[0][5] = Unit("reaper_swarm");
     for (int i = 0; i < 3; i++) {
-      board[9][i] = Unit("space_marine");
+      board[GameConstants.BOARD_ROWS - 1][i] = Unit("space_marine");
     }
   }
 
   List<Offset> _calculateChargeRange(int row, int col, Unit unit) {
     List<Offset> result = [];
-    for (int r = 0; r < 10; r++) {
-      for (int c = 0; c < 14; c++) {
+    for (int r = 0; r < GameConstants.BOARD_ROWS; r++) {
+      for (int c = 0; c < GameConstants.BOARD_COLS; c++) {
         double distance = sqrt(pow(r - row, 2) + pow(c - col, 2));
         // Dentro del rango de carga (12")
-        if (distance <= 12 && distance > 1) {
+        if (distance <= GameConstants.CHARGE_RANGE && distance > 1) {
           result.add(Offset(c.toDouble(), r.toDouble()));
         }
       }
@@ -167,7 +171,7 @@ class GameState extends ChangeNotifier {
     );
 
     // Permitir cargas a unidades adyacentes
-    if (distance <= 12 && distance > 1) {
+    if (distance <= GameConstants.CHARGE_RANGE && distance > 1) {
       int chargeRoll = await _simulateRoll2D6(
         context,
         distance: distance.round(),
@@ -222,9 +226,9 @@ class GameState extends ChangeNotifier {
       int newCol = targetCol + dir[1];
 
       if (newRow >= 0 &&
-          newRow < 10 &&
+          newRow < GameConstants.BOARD_ROWS &&
           newCol >= 0 &&
-          newCol < 14 &&
+          newCol < GameConstants.BOARD_COLS &&
           board[newRow][newCol] == null) {
         board[newRow][newCol] = attacker;
         board[selectedRow][selectedCol] = null;
@@ -248,8 +252,8 @@ class GameState extends ChangeNotifier {
       pow(targetRow - selectedRow, 2) + pow(targetCol - selectedCol, 2),
     );
 
-    if (distance <= 1.5) {
-      // Usamos 1.5 para capturar casillas diagonales
+    if (distance <= GameConstants.ENGAGEMENT_RANGE) {
+      // Usamos ENGAGEMENT_RANGE para capturar casillas diagonales
       // Número de ataques según el tipo de unidad
       int numAttacks =
           attacker.faction == 'space_marine'
@@ -267,7 +271,7 @@ class GameState extends ChangeNotifier {
 
       // Tiradas para impactar en combate (más sencillo de impactar en cuerpo a cuerpo)
       for (int i = 0; i < numAttacks; i++) {
-        int hitRoll = Random().nextInt(6) + 1;
+        int hitRoll = Random().nextInt(GameConstants.DICE_SIDES) + 1;
         hitRolls.add(hitRoll);
 
         // En combate cuerpo a cuerpo, impacta con 3+ para marines y 4+ para tiránidos
@@ -285,7 +289,7 @@ class GameState extends ChangeNotifier {
       if (successfulHits > 0) {
         List<int> saveRolls = [];
         for (int i = 0; i < successfulHits; i++) {
-          int saveRoll = Random().nextInt(6) + 1;
+          int saveRoll = Random().nextInt(GameConstants.DICE_SIDES) + 1;
           saveRolls.add(saveRoll);
 
           // Salva en 5+ para tiránidos, 3+ para marines
@@ -346,7 +350,7 @@ class GameState extends ChangeNotifier {
 
     // Tiradas para impactar
     for (int i = 0; i < numAttacks; i++) {
-      int hitRoll = Random().nextInt(6) + 1;
+      int hitRoll = Random().nextInt(GameConstants.DICE_SIDES) + 1;
       hitRolls.add(hitRoll);
 
       // Comprueba si impacta (BS o mejor)
@@ -363,7 +367,7 @@ class GameState extends ChangeNotifier {
     if (successfulHits > 0) {
       List<int> saveRolls = [];
       for (int i = 0; i < successfulHits; i++) {
-        int saveRoll = Random().nextInt(6) + 1;
+        int saveRoll = Random().nextInt(GameConstants.DICE_SIDES) + 1;
         saveRolls.add(saveRoll);
 
         // Salva en 5+ para tiránidos, 3+ para marines
@@ -430,7 +434,10 @@ class GameState extends ChangeNotifier {
       for (int j = -unit.movement; j <= unit.movement; j++) {
         int newRow = row + i;
         int newCol = col + j;
-        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 14) {
+        if (newRow >= 0 &&
+            newRow < GameConstants.BOARD_ROWS &&
+            newCol >= 0 &&
+            newCol < GameConstants.BOARD_COLS) {
           if (sqrt(i * i + j * j) <= unit.movement &&
               board[newRow][newCol] == null) {
             result.add(Offset(newCol.toDouble(), newRow.toDouble()));
@@ -447,7 +454,10 @@ class GameState extends ChangeNotifier {
       for (int j = -unit.attackRange; j <= unit.attackRange; j++) {
         int newRow = row + i;
         int newCol = col + j;
-        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 14) {
+        if (newRow >= 0 &&
+            newRow < GameConstants.BOARD_ROWS &&
+            newCol >= 0 &&
+            newCol < GameConstants.BOARD_COLS) {
           if (sqrt(i * i + j * j) <= unit.attackRange) {
             // Cambio clave: incluye TODOS los tiles dentro del rango
             result.add(Offset(newCol.toDouble(), newRow.toDouble()));
@@ -462,8 +472,8 @@ class GameState extends ChangeNotifier {
     BuildContext context, {
     required int distance,
   }) async {
-    int d1 = Random().nextInt(6) + 1;
-    int d2 = Random().nextInt(6) + 1;
+    int d1 = Random().nextInt(GameConstants.DICE_SIDES) + 1;
+    int d2 = Random().nextInt(GameConstants.DICE_SIDES) + 1;
     int total = d1 + d2;
 
     battleLog.add(
@@ -484,7 +494,10 @@ class GameState extends ChangeNotifier {
         if (i == 0 && j == 0) continue;
         int newRow = row + i;
         int newCol = col + j;
-        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 14) {
+        if (newRow >= 0 &&
+            newRow < GameConstants.BOARD_ROWS &&
+            newCol >= 0 &&
+            newCol < GameConstants.BOARD_COLS) {
           final neighbor = board[newRow][newCol];
           if (neighbor != null && neighbor.faction != unit.faction) {
             return true;
@@ -510,9 +523,9 @@ class GameState extends ChangeNotifier {
         int newRow = attackerRow + i;
         int newCol = attackerCol + j;
         if (newRow >= 0 &&
-            newRow < 10 &&
+            newRow < GameConstants.BOARD_ROWS &&
             newCol >= 0 &&
-            newCol < 14 &&
+            newCol < GameConstants.BOARD_COLS &&
             !(newRow == targetRow && newCol == targetCol)) {
           final neighbor = board[newRow][newCol];
           if (neighbor != null && neighbor.faction != attacker.faction) {

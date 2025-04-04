@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/unit.dart';
+import '../constants/game_constants.dart';
 
 class UnitActionPanel extends StatelessWidget {
   final Function() onMoveSelected;
@@ -28,7 +29,7 @@ class UnitActionPanel extends StatelessWidget {
         isSpaceMarine ? const Color(0xFF0B1E36) : const Color(0xFF3A0D0D);
 
     return Container(
-      width: 40,
+      width: GameConstants.CELL_ACTION_PANEL_WIDTH,
       decoration: BoxDecoration(
         color: Colors.black87,
         border: Border.all(color: mainColor, width: 2),
@@ -89,7 +90,7 @@ class UnitActionPanel extends StatelessWidget {
       onTap: enabled ? onTap : null,
       child: Container(
         width: double.infinity,
-        height: 40,
+        height: GameConstants.CELL_ACTION_PANEL_WIDTH,
         decoration: BoxDecoration(
           color: enabled ? color : Colors.black54,
           border: Border(

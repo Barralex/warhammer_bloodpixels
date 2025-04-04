@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:warhammer_bloodpixels/constants/game_constants.dart';
 import '../models/unit.dart';
 import '../models/game_state.dart';
 
@@ -184,9 +185,9 @@ class GameTile extends StatelessWidget {
       final newCol = col + offset.dx.toInt();
 
       if (newRow >= 0 &&
-          newRow < 10 &&
+          newRow < GameConstants.BOARD_ROWS &&
           newCol >= 0 &&
-          newCol < 14 &&
+          newCol < GameConstants.BOARD_COLS &&
           board[newRow][newCol] != null &&
           board[newRow][newCol]!.faction != unit!.faction &&
           board[newRow][newCol]!.hp > 0) {
