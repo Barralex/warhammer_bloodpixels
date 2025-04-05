@@ -71,6 +71,10 @@ class UnitInfoPanel extends StatelessWidget {
         assetPath = 'assets/space_marine.png';
         unitName = 'Space Marine';
         break;
+      case 'sergeant':
+        assetPath = 'assets/sergeant.png';
+        unitName = 'Sargento Infernus';
+        break;
       case 'tyranid':
         assetPath = 'assets/tyranids/default.png';
         unitName = 'Tiránido';
