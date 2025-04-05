@@ -19,6 +19,7 @@ class GameState extends ChangeNotifier {
   List<Offset> attackRange = [];
   Set<Offset> actedUnits = {};
   List<String> battleLog = [];
+  bool isInfoMode = false;
 
   GameState() {
     _initializeBoard();
@@ -87,16 +88,23 @@ class GameState extends ChangeNotifier {
     Offset tappedOffset = Offset(col.toDouble(), row.toDouble());
     Unit? unit = board[row][col];
 
-    if (unit?.faction == currentTurn && actedUnits.contains(tappedOffset)) {
+    if (unit == null) {
+      clearSelection();
       return;
     }
 
-    if (unit?.faction == currentTurn) {
-      selectedTile = Offset(col.toDouble(), row.toDouble());
+    isInfoMode = unit.faction != currentTurn;
+    selectedTile = tappedOffset;
+
+    if (unit.faction == currentTurn && !actedUnits.contains(tappedOffset)) {
       moveRange = [];
       attackRange = [];
-      notifyListeners();
+    } else {
+      moveRange = [];
+      attackRange = [];
     }
+
+    notifyListeners();
   }
 
   void moveUnit(int targetRow, int targetCol) {

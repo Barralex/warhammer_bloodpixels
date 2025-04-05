@@ -110,10 +110,13 @@ class _GameBoardState extends State<GameBoard> {
       }
     }
 
-    if (unit?.faction == gameState.currentTurn &&
-        !gameState.actedUnits.contains(tappedOffset)) {
+    if (unit != null) {
       gameState.selectTile(row, col);
-      _showUnitActionPanel(context, row, col);
+
+      if (unit.faction == gameState.currentTurn &&
+          !gameState.actedUnits.contains(tappedOffset)) {
+        _showUnitActionPanel(context, row, col);
+      }
     } else {
       gameState.clearSelection();
     }
