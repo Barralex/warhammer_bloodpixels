@@ -366,17 +366,20 @@ class _GameBoardState extends State<GameBoard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black, // Fondo negro para toda la app
       appBar: AppBar(
-        backgroundColor: Colors.brown[800],
+        backgroundColor: Colors.black, // Barra negra
+        elevation: 0, // Sin sombra
         title: _buildTurnBanner(),
         centerTitle: true,
       ),
       body: Row(
         children: [
+          // Panel de juego (tablero)
           Expanded(
             flex: 3,
             child: Container(
-              color: const Color(0xFFF5F5DC),
+              color: const Color(0xFF1E1E1E), // Gris oscuro para el tablero
               child: Center(
                 child: AspectRatio(
                   aspectRatio:
@@ -423,53 +426,56 @@ class _GameBoardState extends State<GameBoard> {
               ),
             ),
           ),
-          Column(
-            children: [
-              Container(
-                width: GameConstants.BATTLE_LOG_PANEL_WIDTH,
-                padding: const EdgeInsets.all(12),
-                color: const Color(0xFF1E1E1E),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Registro de Batalla',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        _currentMenuOverlay?.remove();
-                        _currentMenuOverlay = null;
-                        gameState.endTurn();
-                      },
-                      icon: const Icon(Icons.shield_moon, size: 20),
-                      label: const Text('Finalizar Turno'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2C2C2C),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
-                  ],
+          // Panel lateral
+          Container(
+            width: GameConstants.BATTLE_LOG_PANEL_WIDTH,
+            color: Colors.black, // Fondo negro para el panel
+            child: Column(
+              children: [
+                // Panel de info de unidad
+                UnitInfoPanel(
+                  selectedUnit:
+                      gameState.selectedTile != null
+                          ? gameState.board[gameState.selectedTile!.dy
+                              .toInt()][gameState.selectedTile!.dx.toInt()]
+                          : null,
                 ),
-              ),
-              UnitInfoPanel(
-                selectedUnit:
-                    gameState.selectedTile != null
-                        ? gameState.board[gameState.selectedTile!.dy
-                            .toInt()][gameState.selectedTile!.dx.toInt()]
-                        : null,
-              ),
-              Expanded(child: BattleLogPanel(logLines: gameState.battleLog)),
-            ],
+                // Logs de combate
+                Expanded(child: BattleLogPanel(logLines: gameState.battleLog)),
+                // Botón de pasar turno simplificado
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _currentMenuOverlay?.remove();
+                      _currentMenuOverlay = null;
+                      gameState.endTurn();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          gameState.currentTurn == 'space_marine'
+                              ? const Color(0xFF0B1E36)
+                              : const Color(0xFF3A0D0D),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(
+                        double.infinity,
+                        50,
+                      ), // Ancho completo
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'PASAR TURNO',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
