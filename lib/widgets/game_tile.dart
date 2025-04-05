@@ -219,13 +219,43 @@ class _GameTileState extends State<GameTile> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) {
-        if ((widget.actionMode == ActionMode.attack && widget.inAttackRange) ||
-            (widget.actionMode == ActionMode.charge && widget.inChargeRange) ||
-            (widget.actionMode == ActionMode.melee &&
-                _isEngaged(widget.row, widget.col))) {
-          if (widget.unit != null) {
-            _showAttackTooltip(context);
-          }
+        print(
+          '➡️ HOVER en (${widget.row}, ${widget.col}) '
+          'charge? ${widget.inChargeRange} '
+          'attack? ${widget.inAttackRange} '
+          'engaged? ${_isEngaged(widget.row, widget.col)} '
+          'unit: ${widget.unit?.type}',
+        );
+
+        // Solo mostrar tooltips si hay una unidad
+        if (widget.unit == null) return;
+
+        // Comprobar si debemos mostrar tooltip según el modo
+        bool showTooltip = false;
+
+        switch (widget.actionMode) {
+          case ActionMode.attack:
+            showTooltip =
+                widget.inAttackRange &&
+                !_isEngaged(widget.row, widget.col) &&
+                widget.unit!.faction != widget.currentTurn;
+            break;
+          case ActionMode.charge:
+            showTooltip =
+                widget.inChargeRange &&
+                widget.unit!.faction != widget.currentTurn;
+            break;
+          case ActionMode.melee:
+            showTooltip =
+                _isEngaged(widget.row, widget.col) &&
+                widget.unit!.faction != widget.currentTurn;
+            break;
+          default:
+            showTooltip = false;
+        }
+
+        if (showTooltip) {
+          _showAttackTooltip(context);
         }
       },
       onExit: (_) {
