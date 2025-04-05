@@ -49,130 +49,146 @@ class _GameTileState extends State<GameTile> {
     if (widget.unit == null) return;
     if (widget.unit!.faction == widget.currentTurn) return;
 
-    String title;
-    List<Widget> content = [];
+    // Añadir protección para evitar mostrar el tooltip durante actualizaciones
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
 
-    if (widget.actionMode == ActionMode.attack) {
-      title = "Predicción de Ataque";
-      int attackerBS = widget.currentTurn == 'space_marine' ? 3 : 4;
-      int targetSave = widget.unit!.faction == 'space_marine' ? 3 : 5;
+      String title;
+      List<Widget> content = [];
 
-      content = [
-        Row(
-          children: [
-            Icon(Icons.arrow_forward, color: Colors.red[300], size: 16),
-            SizedBox(width: 6),
-            Text(
-              "${attackerBS}+ impacta, 1-${attackerBS - 1} falla",
-              style: TextStyle(color: Colors.white),
-            ),
-          ],
-        ),
-        SizedBox(height: 6),
-        Row(
-          children: [
-            Icon(Icons.shield, color: Colors.blue[300], size: 16),
-            SizedBox(width: 6),
-            Text("${targetSave}+ salva", style: TextStyle(color: Colors.white)),
-          ],
-        ),
-      ];
-    } else if (widget.actionMode == ActionMode.charge) {
-      title = "Predicción de Carga";
+      if (widget.actionMode == ActionMode.attack) {
+        title = "Predicción de Ataque";
+        int attackerBS = widget.currentTurn == 'space_marine' ? 3 : 4;
+        int targetSave = widget.unit!.faction == 'space_marine' ? 3 : 5;
 
-      // Calcular la distancia real entre las unidades
-      double distance = 0;
-      if (widget.selectedTilePosition != null) {
-        distance = sqrt(
-          pow(widget.row - widget.selectedTilePosition!.dy, 2) +
-              pow(widget.col - widget.selectedTilePosition!.dx, 2),
-        );
-      }
-
-      // Mostrar el contenido solo si la distancia es válida
-      if (distance > 0) {
         content = [
           Row(
             children: [
-              Icon(Icons.casino, color: Colors.purple[300], size: 16),
+              Icon(Icons.arrow_forward, color: Colors.red[300], size: 16),
               SizedBox(width: 6),
-              // Quita "para éxito" del texto
               Text(
-                "Tirada 2D6 ≥ ${distance.ceil()}",
+                "${attackerBS}+ impacta, 1-${attackerBS - 1} falla",
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+          SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.shield, color: Colors.blue[300], size: 16),
+              SizedBox(width: 6),
+              Text(
+                "${targetSave}+ salva",
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+        ];
+      } else if (widget.actionMode == ActionMode.charge) {
+        title = "Predicción de Carga";
+        double distance = 0;
+        if (widget.selectedTilePosition != null) {
+          distance = sqrt(
+            pow(widget.row - widget.selectedTilePosition!.dy, 2) +
+                pow(widget.col - widget.selectedTilePosition!.dx, 2),
+          );
+        }
+
+        if (distance > 0) {
+          content = [
+            Row(
+              children: [
+                Icon(Icons.casino, color: Colors.purple[300], size: 16),
+                SizedBox(width: 6),
+                Text(
+                  "Tirada 2D6 ≥ ${distance.ceil()}",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ];
+        } else {
+          return;
+        }
+      } else if (widget.actionMode == ActionMode.melee) {
+        title = "Predicción de Combate";
+        int attackerWS = widget.currentTurn == 'space_marine' ? 3 : 4;
+        int targetSave = widget.unit!.faction == 'space_marine' ? 3 : 5;
+
+        content = [
+          Row(
+            children: [
+              Icon(Icons.sports_kabaddi, color: Colors.amber[300], size: 16),
+              SizedBox(width: 6),
+              Text(
+                "${attackerWS}+ impacta, 1-${attackerWS - 1} falla",
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+          SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.shield, color: Colors.blue[300], size: 16),
+              SizedBox(width: 6),
+              Text(
+                "${targetSave}+ salva",
                 style: TextStyle(color: Colors.white),
               ),
             ],
           ),
         ];
       } else {
-        return; // No mostrar tooltip si no hay distancia válida
+        return;
       }
-    } else if (widget.actionMode == ActionMode.melee) {
-      title = "Predicción de Combate";
-      int attackerWS = widget.currentTurn == 'space_marine' ? 3 : 4;
-      int targetSave = widget.unit!.faction == 'space_marine' ? 3 : 5;
 
-      content = [
-        Row(
-          children: [
-            Icon(Icons.sports_kabaddi, color: Colors.amber[300], size: 16),
-            SizedBox(width: 6),
-            Text(
-              "${attackerWS}+ impacta, 1-${attackerWS - 1} falla",
-              style: TextStyle(color: Colors.white),
-            ),
-          ],
-        ),
-        SizedBox(height: 6),
-        Row(
-          children: [
-            Icon(Icons.shield, color: Colors.blue[300], size: 16),
-            SizedBox(width: 6),
-            Text("${targetSave}+ salva", style: TextStyle(color: Colors.white)),
-          ],
-        ),
-      ];
-    } else {
-      return;
-    }
+      if (_tooltipOverlay == null) {
+        final RenderBox box = context.findRenderObject() as RenderBox;
+        final Offset position = box.localToGlobal(Offset.zero);
 
-    final RenderBox box = context.findRenderObject() as RenderBox;
-    final Offset position = box.localToGlobal(Offset.zero);
-
-    _tooltipOverlay = OverlayEntry(
-      builder:
-          (context) => Positioned(
-            left: position.dx + 40,
-            top: position.dy,
-            child: Material(
-              elevation: 4.0,
-              borderRadius: BorderRadius.circular(6),
-              color: Colors.black.withOpacity(0.9),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                width: 200,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
+        _tooltipOverlay = OverlayEntry(
+          builder:
+              (context) => Positioned(
+                left: position.dx + 40,
+                top: position.dy,
+                child: Material(
+                  elevation: 4.0,
+                  borderRadius: BorderRadius.circular(6),
+                  color: Colors.black.withOpacity(0.9),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    width: 200,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Divider(color: Colors.white30),
+                        ...content,
+                      ],
                     ),
-                    Divider(color: Colors.white30),
-                    ...content,
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-    );
+        );
 
-    Overlay.of(context).insert(_tooltipOverlay!);
+        Overlay.of(context).insert(_tooltipOverlay!);
+      }
+    });
+  }
+
+  void _hideAttackTooltip() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _tooltipOverlay?.remove();
+      _tooltipOverlay = null;
+    });
   }
 
   double _calculateDistance(int targetRow, int targetCol) {
@@ -184,11 +200,6 @@ class _GameTileState extends State<GameTile> {
     return sqrt(
       pow(targetRow - selectedRow, 2) + pow(targetCol - selectedCol, 2),
     );
-  }
-
-  void _hideAttackTooltip() {
-    _tooltipOverlay?.remove();
-    _tooltipOverlay = null;
   }
 
   String getAssetPath(String unitType) {
@@ -276,6 +287,7 @@ class _GameTileState extends State<GameTile> {
                 ),
               if (widget.unit != null &&
                   widget.unit!.hp > 0 &&
+                  widget.unit!.faction != null && // Añade esta comprobación
                   _isEngaged(widget.row, widget.col))
                 const Positioned(
                   top: 4,
@@ -356,6 +368,9 @@ class _GameTileState extends State<GameTile> {
   }
 
   bool _isEngaged(int row, int col) {
+    // Comprobación de null antes de acceder a unit.faction
+    if (widget.unit == null) return false;
+
     final adjacentOffsets = [
       Offset(0, 1),
       Offset(1, 0),
