@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:warhammer_bloodpixels/constants/game_constants.dart';
 import '../models/unit.dart';
 import '../models/game_state.dart';
+import 'dart:math';
 
 class GameTile extends StatefulWidget {
   final int row;
@@ -16,6 +17,8 @@ class GameTile extends StatefulWidget {
   final Function(int, int) onTap;
   final ActionMode actionMode;
   final String currentTurn;
+  final Offset? selectedTile; // Asegúrate de añadir esta propiedad al widget
+  final Offset? selectedTilePosition; // Añade esta propiedad al widget
 
   const GameTile({
     Key? key,
@@ -31,6 +34,8 @@ class GameTile extends StatefulWidget {
     required this.onTap,
     required this.actionMode,
     required this.currentTurn,
+    this.selectedTile,
+    this.selectedTilePosition,
   }) : super(key: key);
 
   @override
@@ -41,11 +46,95 @@ class _GameTileState extends State<GameTile> {
   OverlayEntry? _tooltipOverlay;
 
   void _showAttackTooltip(BuildContext context) {
-    if (widget.actionMode != ActionMode.attack || widget.unit == null) return;
+    if (widget.unit == null) return;
     if (widget.unit!.faction == widget.currentTurn) return;
 
-    int attackerBS = widget.currentTurn == 'space_marine' ? 3 : 4;
-    int targetSave = widget.unit!.faction == 'space_marine' ? 3 : 5;
+    String title;
+    List<Widget> content = [];
+
+    if (widget.actionMode == ActionMode.attack) {
+      title = "Predicción de Ataque";
+      int attackerBS = widget.currentTurn == 'space_marine' ? 3 : 4;
+      int targetSave = widget.unit!.faction == 'space_marine' ? 3 : 5;
+
+      content = [
+        Row(
+          children: [
+            Icon(Icons.arrow_forward, color: Colors.red[300], size: 16),
+            SizedBox(width: 6),
+            Text(
+              "${attackerBS}+ impacta, 1-${attackerBS - 1} falla",
+              style: TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+        SizedBox(height: 6),
+        Row(
+          children: [
+            Icon(Icons.shield, color: Colors.blue[300], size: 16),
+            SizedBox(width: 6),
+            Text("${targetSave}+ salva", style: TextStyle(color: Colors.white)),
+          ],
+        ),
+      ];
+    } else if (widget.actionMode == ActionMode.charge) {
+      title = "Predicción de Carga";
+
+      // Calcular la distancia real entre las unidades
+      double distance = 0;
+      if (widget.selectedTilePosition != null) {
+        distance = sqrt(
+          pow(widget.row - widget.selectedTilePosition!.dy, 2) +
+              pow(widget.col - widget.selectedTilePosition!.dx, 2),
+        );
+      }
+
+      // Mostrar el contenido solo si la distancia es válida
+      if (distance > 0) {
+        content = [
+          Row(
+            children: [
+              Icon(Icons.casino, color: Colors.purple[300], size: 16),
+              SizedBox(width: 6),
+              // Quita "para éxito" del texto
+              Text(
+                "Tirada 2D6 ≥ ${distance.ceil()}",
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+        ];
+      } else {
+        return; // No mostrar tooltip si no hay distancia válida
+      }
+    } else if (widget.actionMode == ActionMode.melee) {
+      title = "Predicción de Combate";
+      int attackerWS = widget.currentTurn == 'space_marine' ? 3 : 4;
+      int targetSave = widget.unit!.faction == 'space_marine' ? 3 : 5;
+
+      content = [
+        Row(
+          children: [
+            Icon(Icons.sports_kabaddi, color: Colors.amber[300], size: 16),
+            SizedBox(width: 6),
+            Text(
+              "${attackerWS}+ impacta, 1-${attackerWS - 1} falla",
+              style: TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+        SizedBox(height: 6),
+        Row(
+          children: [
+            Icon(Icons.shield, color: Colors.blue[300], size: 16),
+            SizedBox(width: 6),
+            Text("${targetSave}+ salva", style: TextStyle(color: Colors.white)),
+          ],
+        ),
+      ];
+    } else {
+      return;
+    }
 
     final RenderBox box = context.findRenderObject() as RenderBox;
     final Offset position = box.localToGlobal(Offset.zero);
@@ -67,7 +156,7 @@ class _GameTileState extends State<GameTile> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      "Predicción de Ataque",
+                      title,
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -75,31 +164,7 @@ class _GameTileState extends State<GameTile> {
                       ),
                     ),
                     Divider(color: Colors.white30),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.arrow_forward,
-                          color: Colors.red[300],
-                          size: 16,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          "$attackerBS+ impacta, 1-${attackerBS - 1} falla",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(Icons.shield, color: Colors.blue[300], size: 16),
-                        SizedBox(width: 6),
-                        Text(
-                          "$targetSave+ salva",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ],
-                    ),
+                    ...content,
                   ],
                 ),
               ),
@@ -108,6 +173,17 @@ class _GameTileState extends State<GameTile> {
     );
 
     Overlay.of(context).insert(_tooltipOverlay!);
+  }
+
+  double _calculateDistance(int targetRow, int targetCol) {
+    if (widget.selectedTile == null) return 0;
+
+    int selectedRow = widget.selectedTile!.dy.toInt();
+    int selectedCol = widget.selectedTile!.dx.toInt();
+
+    return sqrt(
+      pow(targetRow - selectedRow, 2) + pow(targetCol - selectedCol, 2),
+    );
   }
 
   void _hideAttackTooltip() {
@@ -132,10 +208,13 @@ class _GameTileState extends State<GameTile> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) {
-        if (widget.actionMode == ActionMode.attack &&
-            widget.inAttackRange &&
-            widget.unit != null) {
-          _showAttackTooltip(context);
+        if ((widget.actionMode == ActionMode.attack && widget.inAttackRange) ||
+            (widget.actionMode == ActionMode.charge && widget.inChargeRange) ||
+            (widget.actionMode == ActionMode.melee &&
+                _isEngaged(widget.row, widget.col))) {
+          if (widget.unit != null) {
+            _showAttackTooltip(context);
+          }
         }
       },
       onExit: (_) {
