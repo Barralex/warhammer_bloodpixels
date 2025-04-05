@@ -36,7 +36,7 @@ class Unit {
       hp: 10,
       maxHp: 10,
       movement: 6,
-      attackRange: 3,
+      attackRange: 12,
       chargeRange: 12,
       damage: 3,
       weaponBS: 3,
