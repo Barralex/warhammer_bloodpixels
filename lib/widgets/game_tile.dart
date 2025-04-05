@@ -354,7 +354,7 @@ class _GameTileState extends State<GameTile> {
               value: unit.hp / unit.maxHp,
               backgroundColor: Colors.black26,
               valueColor: AlwaysStoppedAnimation<Color>(
-                unit.type == 'space_marine' ? Colors.green : Colors.red,
+                unit.faction == 'space_marine' ? Colors.green : Colors.red,
               ),
               minHeight: 10,
             ),

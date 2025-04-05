@@ -61,13 +61,22 @@ class GameState extends ChangeNotifier {
 
   void _initializeBoard() {
     actedUnits = {};
-    for (int i = 0; i < 5; i++) {
+    
+    // 10 Termagantes en fila 0
+    for (int i = 0; i < 10; i++) {
       board[0][i] = Unit("tyranid");
     }
-    board[0][5] = Unit("reaper_swarm");
-    for (int i = 0; i < 3; i++) {
+    
+    // 1 Enjambre Devorador
+    board[0][10] = Unit("reaper_swarm");
+    
+    // 4 Marines Infernus en la última fila
+    for (int i = 0; i < 4; i++) {
       board[GameConstants.BOARD_ROWS - 1][i] = Unit("space_marine");
     }
+    
+    // 1 Sargento Infernus
+    board[GameConstants.BOARD_ROWS - 1][4] = Unit("sergeant");
   }
 
   List<Offset> _calculateChargeRange(int row, int col, Unit unit) {

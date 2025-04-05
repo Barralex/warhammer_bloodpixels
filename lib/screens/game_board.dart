@@ -269,63 +269,6 @@ class _GameBoardState extends State<GameBoard> {
     return sqrt(pow(toRow - fromRow, 2) + pow(toCol - fromCol, 2));
   }
 
-  void _handleSuccessfulCharge(
-    int targetRow,
-    int targetCol,
-    int selectedRow,
-    int selectedCol,
-  ) {
-    Unit attacker = gameState.board[selectedRow][selectedCol]!;
-
-    Unit target = gameState.board[targetRow][targetCol]!;
-    target.hp -= attacker.damage;
-
-    if (target.hp <= 0) {
-      target.hp = 0;
-    }
-
-    Offset finalOffset = Offset(selectedCol.toDouble(), selectedRow.toDouble());
-
-    if (gameState.board[targetRow][targetCol] == null) {
-      gameState.board[targetRow][targetCol] = attacker;
-      gameState.board[selectedRow][selectedCol] = null;
-      finalOffset = Offset(targetCol.toDouble(), targetRow.toDouble());
-    } else {
-      final directions = [
-        [0, 1],
-        [1, 0],
-        [0, -1],
-        [-1, 0],
-        [-1, -1],
-        [-1, 1],
-        [1, -1],
-        [1, 1],
-      ];
-
-      for (var dir in directions) {
-        int newRow = targetRow + dir[0];
-        int newCol = targetCol + dir[1];
-
-        if (newRow >= 0 &&
-            newRow < GameConstants.BOARD_ROWS &&
-            newCol >= 0 &&
-            newCol < GameConstants.BOARD_COLS &&
-            gameState.board[newRow][newCol] == null) {
-          gameState.board[newRow][newCol] = attacker;
-          gameState.board[selectedRow][selectedCol] = null;
-          finalOffset = Offset(newCol.toDouble(), newRow.toDouble());
-          break;
-        }
-      }
-    }
-
-    setState(() {
-      gameState.actedUnits.add(finalOffset);
-      gameState.clearSelection();
-      _checkVictoryCondition(context);
-    });
-  }
-
   Widget _buildTurnBanner() {
     bool isMarineTurn = gameState.currentTurn == 'space_marine';
     String factionName = isMarineTurn ? "Space Marines" : "Tiranidos";
@@ -420,7 +363,9 @@ class _GameBoardState extends State<GameBoard> {
                         board: gameState.board,
                         actionMode: gameState.actionMode,
                         currentTurn: gameState.currentTurn,
-                        selectedTilePosition: gameState.selectedTile, // Pasa la posición seleccionada
+                        selectedTilePosition:
+                            gameState
+                                .selectedTile, // Pasa la posición seleccionada
                       );
                     },
                   ),
