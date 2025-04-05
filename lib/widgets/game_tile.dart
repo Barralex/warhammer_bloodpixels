@@ -3,7 +3,7 @@ import 'package:warhammer_bloodpixels/constants/game_constants.dart';
 import '../models/unit.dart';
 import '../models/game_state.dart';
 
-class GameTile extends StatelessWidget {
+class GameTile extends StatefulWidget {
   final int row;
   final int col;
   final Unit? unit;
@@ -15,6 +15,7 @@ class GameTile extends StatelessWidget {
   final List<List<Unit?>> board;
   final Function(int, int) onTap;
   final ActionMode actionMode;
+  final String currentTurn;
 
   const GameTile({
     Key? key,
@@ -29,7 +30,90 @@ class GameTile extends StatelessWidget {
     required this.board,
     required this.onTap,
     required this.actionMode,
+    required this.currentTurn,
   }) : super(key: key);
+
+  @override
+  _GameTileState createState() => _GameTileState();
+}
+
+class _GameTileState extends State<GameTile> {
+  OverlayEntry? _tooltipOverlay;
+
+  void _showAttackTooltip(BuildContext context) {
+    if (widget.actionMode != ActionMode.attack || widget.unit == null) return;
+    if (widget.unit!.faction == widget.currentTurn) return;
+
+    int attackerBS = widget.currentTurn == 'space_marine' ? 3 : 4;
+    int targetSave = widget.unit!.faction == 'space_marine' ? 3 : 5;
+
+    final RenderBox box = context.findRenderObject() as RenderBox;
+    final Offset position = box.localToGlobal(Offset.zero);
+
+    _tooltipOverlay = OverlayEntry(
+      builder:
+          (context) => Positioned(
+            left: position.dx + 40,
+            top: position.dy,
+            child: Material(
+              elevation: 4.0,
+              borderRadius: BorderRadius.circular(6),
+              color: Colors.black.withOpacity(0.9),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                width: 200,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Predicción de Ataque",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Divider(color: Colors.white30),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.arrow_forward,
+                          color: Colors.red[300],
+                          size: 16,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          "$attackerBS+ impacta, 1-${attackerBS - 1} falla",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.shield, color: Colors.blue[300], size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          "$targetSave+ salva",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+    );
+
+    Overlay.of(context).insert(_tooltipOverlay!);
+  }
+
+  void _hideAttackTooltip() {
+    _tooltipOverlay?.remove();
+    _tooltipOverlay = null;
+  }
 
   String getAssetPath(String unitType) {
     switch (unitType) {
@@ -46,96 +130,116 @@ class GameTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onTap(row, col),
-      child: Container(
-        decoration: BoxDecoration(
-          image: const DecorationImage(
-            image: AssetImage('assets/tile.png'),
-            fit: BoxFit.cover,
+    return MouseRegion(
+      onEnter: (_) {
+        if (widget.actionMode == ActionMode.attack &&
+            widget.inAttackRange &&
+            widget.unit != null) {
+          _showAttackTooltip(context);
+        }
+      },
+      onExit: (_) {
+        _hideAttackTooltip();
+      },
+      child: GestureDetector(
+        onTap: () => widget.onTap(widget.row, widget.col),
+        child: Container(
+          decoration: BoxDecoration(
+            image: const DecorationImage(
+              image: AssetImage('assets/tile.png'),
+              fit: BoxFit.cover,
+            ),
+            border: Border.all(color: Colors.black),
+            boxShadow:
+                widget.isSelected
+                    ? [
+                      BoxShadow(
+                        color: Colors.yellowAccent,
+                        blurRadius: 5,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                    : [],
           ),
-          border: Border.all(color: Colors.black),
-          boxShadow:
-              isSelected
-                  ? [
-                    BoxShadow(
-                      color: Colors.yellowAccent,
-                      blurRadius: 5,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                  : [],
-        ),
-        child: Stack(
-          children: [
-            if (inMoveRange &&
-                (actionMode == ActionMode.move ||
-                    actionMode == ActionMode.none))
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                ),
-              ),
-            if (inAttackRange &&
-                (actionMode == ActionMode.attack ||
-                    actionMode == ActionMode.none))
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                ),
-              ),
-            if (inChargeRange && actionMode == ActionMode.charge)
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.purple.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                ),
-              ),
-            if (unit != null && unit!.hp > 0 && _isEngaged(row, col))
-              const Positioned(
-                top: 4,
-                right: 4,
-                child: Tooltip(
-                  message: 'Trabado en combate',
-                  child: Icon(Icons.lock, size: 18, color: Colors.redAccent),
-                ),
-              ),
-            if (unit != null)
-              Stack(
-                children: [
-                  Opacity(
-                    opacity: unit!.hp == 0 ? 0.2 : (hasActed ? 0.4 : 1.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(child: Image.asset(getAssetPath(unit!.type))),
-                        const SizedBox(height: 2),
-                        _buildHealthBar(unit!),
-                      ],
+          child: Stack(
+            children: [
+              if (widget.inMoveRange &&
+                  (widget.actionMode == ActionMode.move ||
+                      widget.actionMode == ActionMode.none))
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(50),
                     ),
                   ),
-                  if (unit!.hp == 0)
-                    Positioned.fill(
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: Image.asset(
-                          'assets/skull.png',
-                          width: 48,
-                          height: 48,
-                        ),
+                ),
+              if (widget.inAttackRange &&
+                  (widget.actionMode == ActionMode.attack ||
+                      widget.actionMode == ActionMode.none))
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
+                ),
+              if (widget.inChargeRange &&
+                  widget.actionMode == ActionMode.charge)
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
+                ),
+              if (widget.unit != null &&
+                  widget.unit!.hp > 0 &&
+                  _isEngaged(widget.row, widget.col))
+                const Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Tooltip(
+                    message: 'Trabado en combate',
+                    child: Icon(Icons.lock, size: 18, color: Colors.redAccent),
+                  ),
+                ),
+              if (widget.unit != null)
+                Stack(
+                  children: [
+                    Opacity(
+                      opacity:
+                          widget.unit!.hp == 0
+                              ? 0.2
+                              : (widget.hasActed ? 0.4 : 1.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Image.asset(getAssetPath(widget.unit!.type)),
+                          ),
+                          const SizedBox(height: 2),
+                          _buildHealthBar(widget.unit!),
+                        ],
                       ),
                     ),
-                ],
-              ),
-          ],
+                    if (widget.unit!.hp == 0)
+                      Positioned.fill(
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Image.asset(
+                            'assets/skull.png',
+                            width: 48,
+                            height: 48,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -188,9 +292,9 @@ class GameTile extends StatelessWidget {
           newRow < GameConstants.BOARD_ROWS &&
           newCol >= 0 &&
           newCol < GameConstants.BOARD_COLS &&
-          board[newRow][newCol] != null &&
-          board[newRow][newCol]!.faction != unit!.faction &&
-          board[newRow][newCol]!.hp > 0) {
+          widget.board[newRow][newCol] != null &&
+          widget.board[newRow][newCol]!.faction != widget.unit!.faction &&
+          widget.board[newRow][newCol]!.hp > 0) {
         return true;
       }
     }

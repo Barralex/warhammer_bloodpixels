@@ -419,6 +419,8 @@ class _GameBoardState extends State<GameBoard> {
                         onTap: _onTileTapped,
                         board: gameState.board,
                         actionMode: gameState.actionMode,
+                        currentTurn:
+                            gameState.currentTurn, // Pasamos el turno actual
                       );
                     },
                   ),
