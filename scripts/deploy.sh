@@ -79,3 +79,27 @@ aws amplify start-deployment \
 
 echo "✅ Despliegue iniciado con Job ID: $JOB_ID"
 echo "Puedes verificar el estado en la consola de AWS Amplify"
+
+echo "⏳ Esperando a que el Job finalice..."
+
+while true; do
+  STATUS=$(aws amplify get-job \
+    --app-id "$APP_ID" \
+    --branch-name "$BRANCH" \
+    --job-id "$JOB_ID" \
+    --region "$REGION" \
+    --query 'job.summary.status' \
+    --output text)
+
+  echo "📡 Estado actual: $STATUS"
+
+  if [ "$STATUS" == "SUCCEED" ]; then
+    echo "✅ Despliegue completado exitosamente con Job ID: $JOB_ID"
+    break
+  elif [ "$STATUS" == "FAILED" ] || [ "$STATUS" == "CANCELLED" ]; then
+    echo "❌ El despliegue falló o fue cancelado (estado: $STATUS)"
+    exit 1
+  else
+    sleep 5
+  fi
+done
