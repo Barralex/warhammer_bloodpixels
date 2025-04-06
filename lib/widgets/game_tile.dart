@@ -226,6 +226,7 @@ class _GameTileState extends State<GameTile> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
+      cursor: SystemMouseCursors.click, // Added this line
       onEnter: (_) {
         setState(() {
           _isHovering = true;
