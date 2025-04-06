@@ -312,10 +312,7 @@ class _GameTileState extends State<GameTile> {
                 Stack(
                   children: [
                     Opacity(
-                      opacity:
-                          widget.unit!.hp == 0
-                              ? 0.2
-                              : (widget.hasActed ? 0.4 : 1.0),
+                      opacity: widget.unit!.hp == 0 ? 0.2 : 1.0, // Eliminated the condition for hasActed
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
