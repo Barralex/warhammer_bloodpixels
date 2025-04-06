@@ -77,7 +77,9 @@ class _GameBoardState extends State<GameBoard> {
     }
 
     if (gameState.actionMode == ActionMode.charge &&
-        unit?.faction != gameState.currentTurn) {
+        unit?.faction != gameState.currentTurn &&
+        !(gameState.unitActionsMap[gameState.selectedTileOffset]?.hasCharged ??
+            false)) {
       await gameState.attemptCharge(row, col, context);
       gameState.setActionMode(ActionMode.none);
       _checkVictoryCondition(context);
@@ -186,7 +188,8 @@ class _GameBoardState extends State<GameBoard> {
                 selectedUnit: selectedUnit,
                 isEngaged: isEngaged,
                 unitActionsMap: gameState.unitActionsMap, // Add this argument
-                selectedTileOffset: gameState.selectedTile!, // Add this argument
+                selectedTileOffset:
+                    gameState.selectedTile!, // Add this argument
                 onMoveSelected: () {
                   if (!isEngaged) {
                     gameState.setActionMode(ActionMode.move);

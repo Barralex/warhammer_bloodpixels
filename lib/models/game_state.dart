@@ -246,16 +246,25 @@ class GameState extends ChangeNotifier {
           attacker,
         );
 
+        // Transferir el estado de acciones a la nueva posición
+        if (unitActionsMap.containsKey(unitPos)) {
+          unitActionsMap[finalOffset] = unitActionsMap[unitPos]!;
+          unitActionsMap.remove(unitPos);
+        } else {
+          initializeUnitActions(finalOffset);
+        }
+
         // Marcar que la unidad ha cargado
-        initializeUnitActions(finalOffset);
         unitActionsMap[finalOffset]!.hasCharged = true;
 
         // Reducir acciones restantes
         remainingActions[finalOffset] = (remainingActions[unitPos] ?? 0) - 1;
         remainingActions.remove(unitPos);
 
-        // Si no quedan acciones, marcar como actuada
-        if ((remainingActions[finalOffset] ?? 0) <= 0) {
+        // Si no quedan acciones o ya ha realizado acciones críticas, marcar como actuada
+        if ((remainingActions[finalOffset] ?? 0) <= 0 ||
+            (unitActionsMap[finalOffset]!.hasMoved &&
+                unitActionsMap[finalOffset]!.hasCharged)) {
           actedUnits.add(finalOffset);
           remainingActions.remove(finalOffset);
         }
@@ -264,7 +273,7 @@ class GameState extends ChangeNotifier {
           '¡Carga exitosa! Ahora puedes atacar en combate cuerpo a cuerpo.',
         );
       } else {
-        battleLog.add('Carga fallida');
+        battleLog.add('Carga fallida. Puedes intentarlo de nuevo.');
       }
 
       clearSelection();
@@ -635,6 +644,8 @@ class GameState extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Offset? get selectedTileOffset => selectedTile;
 
   // Removed duplicate endTurn method to resolve conflict
 }
