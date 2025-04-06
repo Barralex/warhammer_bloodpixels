@@ -338,9 +338,9 @@ class _GameTileState extends State<GameTile> {
                 ),
               if (widget.unit != null && widget.unit!.hp > 0)
                 Positioned(
-                  bottom: 2,
+                  top: 2,
                   right: 2,
-                  child: Row(
+                  child: Column(
                     children: [
                       _buildActionDot(
                         widget
@@ -351,7 +351,7 @@ class _GameTileState extends State<GameTile> {
                                 ?.hasMoved ==
                             true,
                       ),
-                      const SizedBox(width: 2),
+                      const SizedBox(height: 2),
                       _buildActionDot(
                         widget
                                 .unitActionsMap[Offset(
@@ -423,8 +423,8 @@ class _GameTileState extends State<GameTile> {
     bool shouldBeGrey = isUsed || noActionsLeft;
 
     return Container(
-      width: 8,
-      height: 8,
+      width: 6, // Reduced size from 8 to 6
+      height: 6, // Reduced size from 8 to 6
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color:
@@ -433,7 +433,10 @@ class _GameTileState extends State<GameTile> {
                 : widget.unit!.faction == 'space_marine'
                 ? Colors.blue
                 : Colors.red,
-        border: Border.all(color: Colors.white.withOpacity(0.7), width: 1),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.7),
+          width: 0.5,
+        ), // Thinner border
       ),
     );
   }
