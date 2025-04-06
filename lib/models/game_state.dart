@@ -165,8 +165,15 @@ class GameState extends ChangeNotifier {
 
     int selectedRow = selectedTile!.dy.toInt();
     int selectedCol = selectedTile!.dx.toInt();
+    Offset unitPos = Offset(selectedCol.toDouble(), selectedRow.toDouble());
     Unit attacker = board[selectedRow][selectedCol]!;
     Unit target = board[targetRow][targetCol]!;
+
+    // Inicializar las acciones si no existen
+    initializeUnitActions(unitPos);
+
+    // Marcar que la unidad ha atacado
+    unitActionsMap[unitPos]!.hasAttacked = true;
 
     double distance = sqrt(
       pow(targetRow - selectedRow, 2) + pow(targetCol - selectedCol, 2),
@@ -189,6 +196,16 @@ class GameState extends ChangeNotifier {
       }
 
       _performAttack(selectedRow, selectedCol, targetRow, targetCol, context);
+
+      // Actualizar acciones restantes
+      remainingActions[unitPos] = (remainingActions[unitPos] ?? 0) - 1;
+
+      // Si no quedan acciones, marcar como actuada
+      if ((remainingActions[unitPos] ?? 0) <= 0) {
+        actedUnits.add(unitPos);
+        remainingActions.remove(unitPos);
+      }
+
       clearSelection();
     }
   }

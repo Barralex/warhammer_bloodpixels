@@ -20,6 +20,7 @@ class GameTile extends StatefulWidget {
   final String currentTurn;
   final Offset? selectedTile; // Asegúrate de añadir esta propiedad al widget
   final Offset? selectedTilePosition; // Añade esta propiedad al widget
+  final Map<Offset, UnitActions> unitActionsMap; // Define this property
 
   const GameTile({
     Key? key,
@@ -37,6 +38,7 @@ class GameTile extends StatefulWidget {
     required this.currentTurn,
     this.selectedTile,
     this.selectedTilePosition,
+    required this.unitActionsMap,
   }) : super(key: key);
 
   @override
@@ -334,6 +336,34 @@ class _GameTileState extends State<GameTile> {
                       ),
                   ],
                 ),
+              if (widget.unit != null && widget.unit!.hp > 0)
+                Positioned(
+                  bottom: 2,
+                  right: 2,
+                  child: Row(
+                    children: [
+                      _buildActionDot(
+                        widget
+                                .unitActionsMap[Offset(
+                                  widget.col.toDouble(),
+                                  widget.row.toDouble(),
+                                )]
+                                ?.hasMoved ==
+                            true,
+                      ),
+                      const SizedBox(width: 2),
+                      _buildActionDot(
+                        widget
+                                .unitActionsMap[Offset(
+                                  widget.col.toDouble(),
+                                  widget.row.toDouble(),
+                                )]
+                                ?.hasAttacked ==
+                            true,
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
@@ -368,6 +398,23 @@ class _GameTileState extends State<GameTile> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionDot(bool isUsed) {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color:
+            isUsed
+                ? Colors.grey.withOpacity(0.5)
+                : widget.unit!.faction == 'space_marine'
+                ? Colors.blue
+                : Colors.red,
+        border: Border.all(color: Colors.white.withOpacity(0.7), width: 1),
       ),
     );
   }

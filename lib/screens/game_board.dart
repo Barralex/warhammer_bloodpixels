@@ -367,6 +367,7 @@ class _GameBoardState extends State<GameBoard> {
                         selectedTilePosition:
                             gameState
                                 .selectedTile, // Pasa la posición seleccionada
+                        unitActionsMap: gameState.unitActionsMap,
                       );
                     },
                   ),
