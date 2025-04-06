@@ -403,13 +403,32 @@ class _GameTileState extends State<GameTile> {
   }
 
   Widget _buildActionDot(bool isUsed) {
+    // Verificar si quedan acciones disponibles para esta unidad
+    bool noActionsLeft = false;
+
+    if (widget.unitActionsMap.containsKey(
+      Offset(widget.col.toDouble(), widget.row.toDouble()),
+    )) {
+      noActionsLeft =
+          widget
+              .unitActionsMap[Offset(
+                widget.col.toDouble(),
+                widget.row.toDouble(),
+              )]!
+              .remainingActions <=
+          0;
+    }
+
+    // Si no quedan acciones, el punto debe estar apagado independientemente de la acción específica
+    bool shouldBeGrey = isUsed || noActionsLeft;
+
     return Container(
       width: 8,
       height: 8,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color:
-            isUsed
+            shouldBeGrey
                 ? Colors.grey.withOpacity(0.5)
                 : widget.unit!.faction == 'space_marine'
                 ? Colors.blue
