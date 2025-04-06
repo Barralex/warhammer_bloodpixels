@@ -20,6 +20,9 @@ class GameState extends ChangeNotifier {
   Set<Offset> actedUnits = {};
   List<String> battleLog = [];
   bool isInfoMode = false;
+  Map<Offset, int> remainingActions =
+      {}; // Rastrear acciones restantes por unidad
+  Map<Offset, UnitActions> unitActionsMap = {};
 
   GameState() {
     _initializeBoard();
@@ -61,20 +64,20 @@ class GameState extends ChangeNotifier {
 
   void _initializeBoard() {
     actedUnits = {};
-    
+
     // 10 Termagantes en fila 0
     for (int i = 0; i < 10; i++) {
       board[0][i] = Unit("tyranid");
     }
-    
+
     // 1 Enjambre Devorador
     board[0][10] = Unit("reaper_swarm");
-    
+
     // 4 Marines Infernus en la última fila
     for (int i = 0; i < 4; i++) {
       board[GameConstants.BOARD_ROWS - 1][i] = Unit("space_marine");
     }
-    
+
     // 1 Sargento Infernus
     board[GameConstants.BOARD_ROWS - 1][4] = Unit("sergeant");
   }
@@ -106,9 +109,8 @@ class GameState extends ChangeNotifier {
     selectedTile = tappedOffset;
 
     if (unit.faction == currentTurn && !actedUnits.contains(tappedOffset)) {
-      moveRange = [];
-      attackRange = [];
-    } else {
+      // Número de acciones por unidad (puedes ajustar según el tipo)
+      remainingActions[tappedOffset] = 2; // Por ejemplo, 2 acciones por turno
       moveRange = [];
       attackRange = [];
     }
@@ -121,6 +123,15 @@ class GameState extends ChangeNotifier {
 
     int selectedRow = selectedTile!.dy.toInt();
     int selectedCol = selectedTile!.dx.toInt();
+    Offset unitPos = Offset(selectedCol.toDouble(), selectedRow.toDouble());
+
+    // Verificar si la unidad tiene acciones restantes
+    if ((remainingActions[unitPos] ?? 0) <= 0 ||
+        unitActionsMap[unitPos]?.hasMoved == true) {
+      battleLog.add('La unidad ya no puede moverse.');
+      notifyListeners();
+      return;
+    }
 
     double distance = sqrt(
       pow(targetRow - selectedRow, 2) + pow(targetCol - selectedCol, 2),
@@ -130,7 +141,21 @@ class GameState extends ChangeNotifier {
       board[targetRow][targetCol] = board[selectedRow][selectedCol];
       board[selectedRow][selectedCol] = null;
 
-      actedUnits.add(Offset(targetCol.toDouble(), targetRow.toDouble()));
+      // Actualizar posición en el mapa de acciones
+      Offset newPos = Offset(targetCol.toDouble(), targetRow.toDouble());
+      remainingActions[newPos] = (remainingActions[unitPos] ?? 0) - 1;
+      remainingActions.remove(unitPos);
+
+      // Marcar que la unidad ha movido
+      initializeUnitActions(newPos);
+      unitActionsMap[newPos]!.hasMoved = true;
+
+      // Si no quedan acciones, marcar como actuada
+      if (remainingActions[newPos] == 0) {
+        actedUnits.add(newPos);
+        remainingActions.remove(newPos);
+      }
+
       clearSelection();
     }
   }
@@ -177,8 +202,23 @@ class GameState extends ChangeNotifier {
 
     int selectedRow = selectedTile!.dy.toInt();
     int selectedCol = selectedTile!.dx.toInt();
+    Offset unitPos = Offset(selectedCol.toDouble(), selectedRow.toDouble());
     Unit attacker = board[selectedRow][selectedCol]!;
     Unit? target = board[targetRow][targetCol];
+
+    // Verificar si la unidad ya ha cargado
+    if (unitActionsMap[unitPos]?.hasCharged == true) {
+      battleLog.add('La unidad ya ha realizado una carga en este turno.');
+      notifyListeners();
+      return;
+    }
+
+    // Verificar si la unidad tiene acciones restantes
+    if ((remainingActions[unitPos] ?? 0) <= 0) {
+      battleLog.add('La unidad no tiene acciones restantes para cargar.');
+      notifyListeners();
+      return;
+    }
 
     // Verificar que hay un enemigo para cargar
     if (target == null || target.faction == attacker.faction) return;
@@ -197,7 +237,6 @@ class GameState extends ChangeNotifier {
       battleLog.add('Distancia de carga: $distance, Tirada: $chargeRoll');
 
       if (chargeRoll >= distance) {
-        // Ya no hacemos daño aquí, solo movemos la unidad
         // Mover unidad atacante cerca del objetivo
         Offset finalOffset = _findAdjacentSpot(
           selectedRow,
@@ -207,12 +246,24 @@ class GameState extends ChangeNotifier {
           attacker,
         );
 
-        actedUnits.add(finalOffset);
+        // Marcar que la unidad ha cargado
+        initializeUnitActions(finalOffset);
+        unitActionsMap[finalOffset]!.hasCharged = true;
+
+        // Reducir acciones restantes
+        remainingActions[finalOffset] = (remainingActions[unitPos] ?? 0) - 1;
+        remainingActions.remove(unitPos);
+
+        // Si no quedan acciones, marcar como actuada
+        if ((remainingActions[finalOffset] ?? 0) <= 0) {
+          actedUnits.add(finalOffset);
+          remainingActions.remove(finalOffset);
+        }
+
         battleLog.add(
           '¡Carga exitosa! Ahora puedes atacar en combate cuerpo a cuerpo.',
         );
       } else {
-        actedUnits.add(Offset(selectedCol.toDouble(), selectedRow.toDouble()));
         battleLog.add('Carga fallida');
       }
 
@@ -440,6 +491,7 @@ class GameState extends ChangeNotifier {
     if (currentTurn == 'space_marine') {
       turnNumber++;
     }
+    remainingActions.clear(); // Limpiar contadores de acciones
     actedUnits.clear();
     clearSelection(); // Limpiar selección al final del turno
     notifyListeners();
@@ -553,4 +605,47 @@ class GameState extends ChangeNotifier {
     }
     return false;
   }
+
+  void initializeUnitActions(Offset unitPosition) {
+    unitActionsMap.putIfAbsent(unitPosition, () => UnitActions());
+  }
+
+  void resetUnitActions() {
+    unitActionsMap.clear();
+  }
+
+  void markUnitAction(Offset unitPosition, ActionMode action) {
+    if (unitActionsMap.containsKey(unitPosition)) {
+      switch (action) {
+        case ActionMode.move:
+          unitActionsMap[unitPosition]!.hasMoved = true;
+          break;
+        case ActionMode.attack:
+          unitActionsMap[unitPosition]!.hasAttacked = true;
+          break;
+        case ActionMode.charge:
+          unitActionsMap[unitPosition]!.hasCharged = true;
+          break;
+        case ActionMode.melee:
+          unitActionsMap[unitPosition]!.hasFought = true;
+          break;
+        default:
+          break;
+      }
+      notifyListeners();
+    }
+  }
+
+  // Removed duplicate endTurn method to resolve conflict
+}
+
+class UnitActions {
+  bool hasMoved = false;
+  bool hasAttacked = false;
+  bool hasCharged = false;
+  bool hasFought = false;
+
+  bool get canAct => !(hasMoved && hasAttacked && (hasCharged || hasFought));
+
+  UnitActions();
 }

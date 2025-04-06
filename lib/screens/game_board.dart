@@ -185,6 +185,8 @@ class _GameBoardState extends State<GameBoard> {
               child: UnitActionPanel(
                 selectedUnit: selectedUnit,
                 isEngaged: isEngaged,
+                unitActionsMap: gameState.unitActionsMap, // Add this argument
+                selectedTileOffset: gameState.selectedTile!, // Add this argument
                 onMoveSelected: () {
                   if (!isEngaged) {
                     gameState.setActionMode(ActionMode.move);
