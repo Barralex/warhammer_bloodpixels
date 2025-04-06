@@ -294,14 +294,17 @@ class _GameTileState extends State<GameTile> {
                 ),
               if (widget.unit != null &&
                   widget.unit!.hp > 0 &&
-                  widget.unit!.faction != null && // Añade esta comprobación
+                  widget.unit!.faction != null &&
                   _isEngaged())
-                const Positioned(
-                  top: 4,
-                  right: 4,
-                  child: Tooltip(
-                    message: 'Trabado en combate',
-                    child: Icon(Icons.lock, size: 18, color: Colors.redAccent),
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.redAccent,
+                        width: 2,
+                      ), // Red border
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                 ),
               if (widget.unit != null)
@@ -318,8 +321,8 @@ class _GameTileState extends State<GameTile> {
                           Expanded(
                             child: Image.asset(getAssetPath(widget.unit!.type)),
                           ),
+                          Center(child: _buildHealthBar(widget.unit!)),
                           const SizedBox(height: 2),
-                          _buildHealthBar(widget.unit!),
                         ],
                       ),
                     ),
@@ -373,8 +376,8 @@ class _GameTileState extends State<GameTile> {
 
   Widget _buildHealthBar(Unit unit) {
     return SizedBox(
-      height: 10,
-      width: 40,
+      height: 8,
+      width: 36,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -386,13 +389,13 @@ class _GameTileState extends State<GameTile> {
               valueColor: AlwaysStoppedAnimation<Color>(
                 unit.faction == 'space_marine' ? Colors.green : Colors.red,
               ),
-              minHeight: 10,
+              minHeight: 8, // Reduced from 10 to 8
             ),
           ),
           Text(
             '${unit.hp}',
             style: const TextStyle(
-              fontSize: 8,
+              fontSize: 7, // Reduced from 8 to 7
               color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
