@@ -41,7 +41,7 @@ class _GameBoardState extends State<GameBoard> {
         context: context,
         barrierDismissible: false,
         builder:
-            (_) => AlertDialog(
+            (context) => AlertDialog(
               title: Text('Victoria'),
               content: Text('$winner han ganado la batalla.'),
               actions: [
@@ -237,29 +237,25 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   bool _isEngaged(int row, int col) {
-    final type = gameState.board[row][col]?.type;
-    if (type == null) return false;
+    final unit = gameState.board[row][col];
+    if (unit == null) return false;
 
-    final adjacentOffsets = [
-      Offset(0, 1),
-      Offset(1, 0),
-      Offset(0, -1),
-      Offset(-1, 0),
-    ];
-
-    for (final offset in adjacentOffsets) {
-      final newRow = row + offset.dy.toInt();
-      final newCol = col + offset.dx.toInt();
-
-      if (newRow >= 0 &&
-          newRow < GameConstants.BOARD_ROWS &&
-          newCol >= 0 &&
-          newCol < GameConstants.BOARD_COLS &&
-          gameState.board[newRow][newCol] != null &&
-          gameState.board[newRow][newCol]!.faction !=
-              gameState.board[row][col]!.faction &&
-          gameState.board[newRow][newCol]!.hp > 0) {
-        return true;
+    for (int i = -1; i <= 1; i++) {
+      for (int j = -1; j <= 1; j++) {
+        if (i == 0 && j == 0) continue; // Skip the current position
+        int newRow = row + i;
+        int newCol = col + j;
+        if (newRow >= 0 &&
+            newRow < GameConstants.BOARD_ROWS &&
+            newCol >= 0 &&
+            newCol < GameConstants.BOARD_COLS) {
+          final neighbor = gameState.board[newRow][newCol];
+          if (neighbor != null &&
+              neighbor.faction != unit.faction &&
+              neighbor.hp > 0) {
+            return true;
+          }
+        }
       }
     }
     return false;
