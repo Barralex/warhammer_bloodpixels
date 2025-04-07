@@ -115,8 +115,8 @@ class _GameBoardState extends State<GameBoard> {
     if (unit != null) {
       gameState.selectTile(row, col);
 
-      if (unit.faction == gameState.currentTurn &&
-          !gameState.actedUnits.contains(tappedOffset)) {
+      // Always show the action panel for units of the current turn
+      if (unit.faction == gameState.currentTurn) {
         _showUnitActionPanel(context, row, col);
       }
     } else {
@@ -132,6 +132,11 @@ class _GameBoardState extends State<GameBoard> {
     final selectedRow = gameState.selectedTile!.dy.toInt();
     final selectedCol = gameState.selectedTile!.dx.toInt();
     final selectedUnit = gameState.board[selectedRow][selectedCol]!;
+
+    // Ensure the unit has an entry in the actions map
+    if (!gameState.unitActionsMap.containsKey(gameState.selectedTile!)) {
+      gameState.ensureUnitActions(gameState.selectedTile!);
+    }
 
     bool isEngaged = _isEngaged(selectedRow, selectedCol);
 

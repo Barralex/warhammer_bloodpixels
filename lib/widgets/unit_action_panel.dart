@@ -33,10 +33,14 @@ class UnitActionPanel extends StatelessWidget {
     final Color mainColor =
         isSpaceMarine ? const Color(0xFF0B1E36) : const Color(0xFF3A0D0D);
     final actions = unitActionsMap[selectedTileOffset] ?? UnitActions();
-    final bool canMove = !actions.hasMoved && !isEngaged;
-    final bool canAttack = !actions.hasAttacked && !isEngaged;
-    final bool canCharge = !actions.hasCharged && !isEngaged;
-    final bool canMelee = !actions.hasFought && isEngaged;
+    final bool canMove =
+        !actions.hasMoved && !isEngaged && actions.remainingActions > 0;
+    final bool canAttack =
+        !actions.hasAttacked && !isEngaged && actions.remainingActions > 0;
+    final bool canCharge =
+        !actions.hasCharged && !isEngaged && actions.remainingActions > 0;
+    final bool canMelee =
+        !actions.hasFought && isEngaged && actions.remainingActions > 0;
 
     return Container(
       width: GameConstants.CELL_ACTION_PANEL_WIDTH,
