@@ -326,6 +326,15 @@ class GameState extends ChangeNotifier {
 
     int selectedRow = selectedTile!.dy.toInt();
     int selectedCol = selectedTile!.dx.toInt();
+    Offset unitPos = Offset(selectedCol.toDouble(), selectedRow.toDouble());
+
+    // Check if the unit can perform melee attack
+    if (!canPerformAction(unitPos, ActionMode.melee)) {
+      battleLog.add('La unidad ya no puede atacar en combate cuerpo a cuerpo.');
+      notifyListeners();
+      return;
+    }
+
     Unit attacker = board[selectedRow][selectedCol]!;
     Unit target = board[targetRow][targetCol]!;
 
@@ -335,7 +344,9 @@ class GameState extends ChangeNotifier {
     );
 
     if (distance <= GameConstants.ENGAGEMENT_RANGE) {
-      // Usamos ENGAGEMENT_RANGE para capturar casillas diagonales
+      // Consume an action before attacking
+      useAction(unitPos, ActionMode.melee);
+
       // Número de ataques según el tipo de unidad
       int numAttacks =
           attacker.faction == 'space_marine'
