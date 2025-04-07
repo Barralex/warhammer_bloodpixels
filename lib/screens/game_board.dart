@@ -220,14 +220,23 @@ class _GameBoardState extends State<GameBoard> {
                   _currentMenuOverlay = null;
                 },
                 onMeleeSelected: () {
-                  if (isEngaged) {
+                  if (isEngaged &&
+                      (gameState
+                              .unitActionsMap[Offset(
+                                selectedCol.toDouble(),
+                                selectedRow.toDouble(),
+                              )]
+                              ?.remainingActions ??
+                          0) > 0) {
                     gameState.setActionMode(ActionMode.melee);
                     _currentMenuOverlay?.remove();
                     _currentMenuOverlay = null;
                   } else {
-                    gameState.battleLog.add(
-                      'No hay enemigos a 1" o menos para combatir.',
-                    );
+                    String message =
+                        !isEngaged
+                            ? 'No hay enemigos a 1" o menos para combatir.'
+                            : 'La unidad no tiene acciones restantes para combatir.';
+                    gameState.battleLog.add(message);
                     gameState.notifyListeners();
                     _currentMenuOverlay?.remove();
                     _currentMenuOverlay = null;
