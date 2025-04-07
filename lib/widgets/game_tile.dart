@@ -312,7 +312,10 @@ class _GameTileState extends State<GameTile> {
                 Stack(
                   children: [
                     Opacity(
-                      opacity: widget.unit!.hp == 0 ? 0.2 : 1.0, // Eliminated the condition for hasActed
+                      opacity:
+                          widget.unit!.hp == 0
+                              ? 0.2
+                              : 1.0, // Eliminated the condition for hasActed
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -360,6 +363,26 @@ class _GameTileState extends State<GameTile> {
                                   widget.row.toDouble(),
                                 )]
                                 ?.hasAttacked ==
+                            true,
+                      ),
+                      const SizedBox(height: 2),
+                      _buildActionDot(
+                        widget
+                                .unitActionsMap[Offset(
+                                  widget.col.toDouble(),
+                                  widget.row.toDouble(),
+                                )]
+                                ?.hasCharged ==
+                            true,
+                      ),
+                      const SizedBox(height: 2),
+                      _buildActionDot(
+                        widget
+                                .unitActionsMap[Offset(
+                                  widget.col.toDouble(),
+                                  widget.row.toDouble(),
+                                )]
+                                ?.hasFought ==
                             true,
                       ),
                     ],

@@ -109,8 +109,8 @@ class GameState extends ChangeNotifier {
     selectedTile = tappedOffset;
 
     if (unit.faction == currentTurn && !actedUnits.contains(tappedOffset)) {
-      // Número de acciones por unidad (puedes ajustar según el tipo)
-      remainingActions[tappedOffset] = 2; // Por ejemplo, 2 acciones por turno
+      // Initialize remaining actions to 4 for the selected unit
+      remainingActions[tappedOffset] = 4; // Changed from 2 to 4
       moveRange = [];
       attackRange = [];
     }
@@ -723,7 +723,7 @@ class UnitActions {
   bool hasAttacked = false;
   bool hasCharged = false;
   bool hasFought = false;
-  int remainingActions = 2; // Start with 2 actions
+  int remainingActions = 4; // Changed from 2 to 4
 
   // A unit can act if it has remaining actions
   bool get canAct => remainingActions > 0;
