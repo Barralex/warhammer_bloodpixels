@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import '../models/unit.dart';
 
 class UnitInfoPanel extends StatelessWidget {
@@ -63,40 +64,77 @@ class UnitInfoPanel extends StatelessWidget {
   }
 
   Widget _buildHeader() {
-    String assetPath = '';
-    String unitName = '';
-
     switch (selectedUnit!.type) {
-      case 'space_marine':
-        assetPath = 'assets/space_marine.png';
-        unitName = 'Space Marine';
-        break;
       case 'sergeant':
-        assetPath = 'assets/sergeant.png';
-        unitName = 'Sargento Infernus';
-        break;
+        return Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF101E30), Color(0xFF1B2C47)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blueAccent.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          width: double.infinity,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FittedBox(
+                fit: BoxFit.contain,
+                child: Lottie.asset(
+                  'assets/animations/space_marine_idle.json',
+                  width: 280,
+                  height: 300,
+                  repeat: true,
+                  animate: true,
+                  alignment: Alignment.center,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.blueAccent, thickness: 1),
+              const SizedBox(height: 8),
+              const Text(
+                'Sargento Infernus',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
+          ),
+        );
+      case 'space_marine':
+        return _imageHeader('assets/space_marine.png', 'Space Marine');
       case 'tyranid':
-        assetPath = 'assets/tyranids/default.png';
-        unitName = 'Tiránido';
-        break;
+        return _imageHeader('assets/tyranids/default.png', 'Tiránido');
       case 'reaper_swarm':
-        assetPath = 'assets/reaper_swarm.png';
-        unitName = 'Reaper Swarm';
-        break;
+        return _imageHeader('assets/reaper_swarm.png', 'Reaper Swarm');
       default:
-        assetPath = 'assets/skull.png';
-        unitName = 'Desconocido';
+        return _imageHeader('assets/skull.png', 'Desconocido');
     }
+  }
 
+  Widget _imageHeader(String assetPath, String unitName) {
     return Container(
-      color:
-          selectedUnit!.faction == 'space_marine'
-              ? const Color(0xFF0B1E36)
-              : const Color(0xFF3A0D0D),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+      ),
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          Image.asset(assetPath, width: 50, height: 50),
+          Image.asset(assetPath, width: 60, height: 60),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -114,21 +152,31 @@ class UnitInfoPanel extends StatelessWidget {
   }
 
   Widget _buildStatRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white10,
+        borderRadius: BorderRadius.circular(4),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontFamily: 'RobotoMono',
+            ),
           ),
           Text(
             value,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'RobotoMono',
             ),
           ),
         ],
