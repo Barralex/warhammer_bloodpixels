@@ -62,6 +62,7 @@ class _GameTileState extends State<GameTile> {
     bool shouldShowTooltip = false;
     String tooltipTitle = "";
     List<Widget> tooltipContent = [];
+    String? animationAsset;
 
     switch (widget.actionMode) {
       case ActionMode.attack:
@@ -69,6 +70,7 @@ class _GameTileState extends State<GameTile> {
             widget.inAttackRange && widget.unit!.faction != widget.currentTurn;
         if (shouldShowTooltip) {
           tooltipTitle = "Ataque a Distancia";
+          animationAsset = 'assets/animations/dice.json';
           int attackerBS = widget.currentTurn == 'space_marine' ? 3 : 4;
           int targetSave = widget.unit!.faction == 'space_marine' ? 3 : 5;
           tooltipContent = [
@@ -93,6 +95,7 @@ class _GameTileState extends State<GameTile> {
           double distance = _calculateDistance();
           if (distance > 0) {
             tooltipTitle = "Carga";
+            animationAsset = 'assets/animations/charge_animation.json';
             tooltipContent = [
               _buildTooltipRow(
                 Icons.casino,
@@ -108,6 +111,7 @@ class _GameTileState extends State<GameTile> {
             _isEngaged() && widget.unit!.faction != widget.currentTurn;
         if (shouldShowTooltip) {
           tooltipTitle = "Combate Cuerpo a Cuerpo";
+          animationAsset = 'assets/animations/melee_animation.json';
           int attackerWS = widget.currentTurn == 'space_marine' ? 3 : 4;
           int targetSave = widget.unit!.faction == 'space_marine' ? 3 : 5;
           tooltipContent = [
@@ -142,7 +146,11 @@ class _GameTileState extends State<GameTile> {
           (context) => Positioned(
             left: position.dx + size.width,
             top: position.dy,
-            child: CombatTooltip(title: tooltipTitle, content: tooltipContent),
+            child: CombatTooltip(
+              title: tooltipTitle,
+              content: tooltipContent,
+              animationAsset: animationAsset,
+            ),
           ),
     );
 

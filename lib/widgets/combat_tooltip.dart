@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 class CombatTooltip extends StatelessWidget {
   final String title;
   final List<Widget> content;
+  final String? animationAsset;
 
-  const CombatTooltip({super.key, required this.title, required this.content});
+  const CombatTooltip({
+    super.key,
+    required this.title,
+    required this.content,
+    this.animationAsset,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +34,13 @@ class CombatTooltip extends StatelessWidget {
                 fontSize: 14,
               ),
             ),
+            if (animationAsset != null)
+              Lottie.asset(
+                animationAsset!,
+                width: 180,
+                height: 120,
+                fit: BoxFit.contain,
+              ),
             const Divider(color: Colors.white30),
             ...content,
           ],
