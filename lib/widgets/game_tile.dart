@@ -95,7 +95,7 @@ class _GameTileState extends State<GameTile> {
           double distance = _calculateDistance();
           if (distance > 0) {
             tooltipTitle = "Carga";
-            animationAsset = 'assets/animations/charge_animation.json';
+            animationAsset = 'assets/animations/dice.json';
             tooltipContent = [
               _buildTooltipRow(
                 Icons.casino,
@@ -111,7 +111,7 @@ class _GameTileState extends State<GameTile> {
             _isEngaged() && widget.unit!.faction != widget.currentTurn;
         if (shouldShowTooltip) {
           tooltipTitle = "Combate Cuerpo a Cuerpo";
-          animationAsset = 'assets/animations/melee_animation.json';
+          animationAsset = 'assets/animations/dice.json';
           int attackerWS = widget.currentTurn == 'space_marine' ? 3 : 4;
           int targetSave = widget.unit!.faction == 'space_marine' ? 3 : 5;
           tooltipContent = [
