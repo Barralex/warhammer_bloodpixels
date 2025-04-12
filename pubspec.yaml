@@ -67,6 +67,7 @@ flutter:
     - assets/reaper_swarm.png
     - assets/sergeant.png
     - assets/animations/space_marine_idle.json
+    - assets/animations/dice.json
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
